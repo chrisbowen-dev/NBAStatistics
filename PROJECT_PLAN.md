@@ -23,7 +23,9 @@ Building a portfolio-quality NBA statistics website using the MERN stack. The si
 
 ```
 NBAStatistics/
-├── client/                        ← React app
+├── docs/                          ← Documentation (PLANNED: move PROJECT_PLAN.md here)
+│   └── PROJECT_PLAN.md            ← Master project plan & implementation phases
+├── client/                        ← React app (TypeScript)
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Navbar.tsx
@@ -41,14 +43,20 @@ NBAStatistics/
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   └── package.json
-├── server/                        ← Express + MongoDB
-│   ├── models/
-│   │   ├── Player.js
-│   │   └── Team.js
-│   ├── routes/
-│   │   ├── players.js
-│   │   └── teams.js
-│   ├── server.js
+├── server/                        ← Express + MongoDB (TypeScript)
+│   ├── src/
+│   │   ├── models/
+│   │   │   ├── Player.ts
+│   │   │   └── Team.ts
+│   │   ├── routes/
+│   │   │   ├── players.ts
+│   │   │   └── teams.ts
+│   │   ├── server.ts
+│   │   └── types/
+│   │       ├── player.ts
+│   │       └── team.ts
+│   ├── dist/                      ← Compiled JavaScript (generated)
+│   ├── tsconfig.json
 │   ├── .env                       ← MONGODB_URI, PYTHON_API_URL
 │   └── package.json
 ├── python-api/                    ← FastAPI + nba_api
@@ -63,6 +71,8 @@ NBAStatistics/
 ├── package.json                   ← Root: concurrently dev script
 └── .gitignore
 ```
+
+**Future Refactoring:** Move `PROJECT_PLAN.md` from root to `docs/PROJECT_PLAN.md` to centralize all project documentation in one folder.
 
 ---
 
@@ -556,7 +566,7 @@ cd client
 npm install
 cd ..
 
-# 4. Install Express (server) dependencies
+# 4. Install Express (server) dependencies with TypeScript
 cd server
 npm install
 cd ..
@@ -660,6 +670,7 @@ Status legend: ✅ Complete · 🚧 In Progress · ⬜ Not Started
 | 3 | Express Backend | 🚧 In Progress |
 | 4 | React Frontend | ⬜ Not Started |
 | 5 | Production Deployment | ⬜ Not Started |
+| 6 | Documentation Refactoring | ⬜ Not Started |
 
 ---
 
@@ -717,27 +728,54 @@ Add to `client/package.json` scripts:
 cd ../server
 npm init -y
 npm install express mongoose axios cors dotenv
-npm install --save-dev nodemon
+npm install --save-dev typescript ts-node @types/node @types/express nodemon
+npx tsc --init
+```
+
+Create `server/tsconfig.json`:
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
 ```
 
 Create `server/package.json` scripts:
 ```json
-"dev": "nodemon server.js",
-"start": "node server.js"
+"dev": "ts-node src/server.ts",
+"build": "tsc",
+"start": "node dist/server.js"
 ```
 
-Create `server/server.js` — bare minimum to confirm it runs:
-```javascript
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
+Create `server/src/server.ts` — bare minimum to confirm it runs:
+```typescript
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
 
@@ -796,11 +834,12 @@ MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/nba_stats
 node_modules/
 client/node_modules/
 server/node_modules/
+server/dist/
 python-api/venv/
 .env
 *.pyc
 __pycache__/
-dist/
+client/dist/
 ```
 
 #### 1g. Initialize Git and push to GitHub
@@ -817,6 +856,7 @@ git push -u origin main
 
 #### Phase 1 Verification
 - `npm run dev` from root starts all three services with no errors
+- Express compiles TypeScript without errors (`src/` → `dist/` via ts-node)
 - `http://localhost:3000` shows the default Vite React page
 - `http://localhost:5000/health` returns `{"status":"ok"}`
 - `http://localhost:8000/health` returns `{"status":"ok"}`
@@ -1025,70 +1065,110 @@ if __name__ == "__main__":
 
 #### 3a. Mongoose Models
 
-`server/models/Player.js`:
-```javascript
-const mongoose = require('mongoose');
-
-const playerSchema = new mongoose.Schema({
-  id: { type: Number, required: true, unique: true },
-  full_name: String,
-  info: mongoose.Schema.Types.Mixed,
-  careerStats: [mongoose.Schema.Types.Mixed],
-  lastUpdated: Date
-}, { strict: false });
-
-module.exports = mongoose.model('Player', playerSchema);
+`server/src/types/player.ts`:
+```typescript
+export interface IPlayer {
+  id: number;
+  full_name: string;
+  info?: Record<string, unknown>;
+  careerStats?: Record<string, unknown>[];
+  lastUpdated?: Date;
+  [key: string]: unknown; // Allow other fields
+}
 ```
 
-`server/models/Team.js`:
-```javascript
-const mongoose = require('mongoose');
-
-const teamSchema = new mongoose.Schema({
-  id: { type: Number, required: true, unique: true },
-  full_name: String,
-  abbreviation: String,
-  roster: [mongoose.Schema.Types.Mixed],
-  stats: mongoose.Schema.Types.Mixed,
-  lastUpdated: Date
-}, { strict: false });
-
-module.exports = mongoose.model('Team', teamSchema);
+`server/src/types/team.ts`:
+```typescript
+export interface ITeam {
+  id: number;
+  full_name: string;
+  abbreviation?: string;
+  roster?: Record<string, unknown>[];
+  stats?: Record<string, unknown>;
+  lastUpdated?: Date;
+  [key: string]: unknown; // Allow other fields
+}
 ```
 
-#### 3b. Players Route (`server/routes/players.js`)
+`server/src/models/Player.ts`:
+```typescript
+import mongoose, { Schema, Document } from 'mongoose';
+import { IPlayer } from '../types/player';
 
-```javascript
-const express = require('express');
-const axios = require('axios');
-const Player = require('../models/Player');
+export interface PlayerDocument extends IPlayer, Document {}
+
+const playerSchema = new Schema<PlayerDocument>(
+  {
+    id: { type: Number, required: true, unique: true },
+    full_name: String,
+    info: Schema.Types.Mixed,
+    careerStats: [Schema.Types.Mixed],
+    lastUpdated: Date
+  },
+  { strict: false }
+);
+
+export default mongoose.model<PlayerDocument>('Player', playerSchema);
+```
+
+`server/src/models/Team.ts`:
+```typescript
+import mongoose, { Schema, Document } from 'mongoose';
+import { ITeam } from '../types/team';
+
+export interface TeamDocument extends ITeam, Document {}
+
+const teamSchema = new Schema<TeamDocument>(
+  {
+    id: { type: Number, required: true, unique: true },
+    full_name: String,
+    abbreviation: String,
+    roster: [Schema.Types.Mixed],
+    stats: Schema.Types.Mixed,
+    lastUpdated: Date
+  },
+  { strict: false }
+);
+
+export default mongoose.model<TeamDocument>('Team', teamSchema);
+```
+
+#### 3b. Players Route (`server/src/routes/players.ts`)
+
+```typescript
+import express, { Request, Response } from 'express';
+import axios from 'axios';
+import Player from '../models/Player';
+
 const router = express.Router();
 
 const PYTHON_URL = process.env.PYTHON_API_URL;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-function isFresh(doc) {
-  return doc?.lastUpdated &&
+function isFresh(doc: { lastUpdated?: Date }): boolean {
+  return doc?.lastUpdated !== undefined &&
     (Date.now() - new Date(doc.lastUpdated).getTime()) < CACHE_TTL_MS;
 }
 
 // Search players
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { name = '' } = req.query;
-    const regex = new RegExp(name, 'i');
+    const nameStr = Array.isArray(name) ? name[0] : name;
+    const regex = new RegExp(nameStr, 'i');
     const cached = await Player.find({ full_name: regex }).limit(50);
     if (cached.length > 0) return res.json(cached);
 
-    const { data } = await axios.get(`${PYTHON_URL}/players/search?name=${name}`);
+    const { data } = await axios.get(`${PYTHON_URL}/players/search?name=${nameStr}`);
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const error = err instanceof Error ? err.message : 'Unknown error';
+    res.status(500).json({ error });
   }
 });
 
 // Get single player
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const cached = await Player.findOne({ id });
@@ -1103,31 +1183,33 @@ router.get('/:id', async (req, res) => {
     );
     res.json(updated);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const error = err instanceof Error ? err.message : 'Unknown error';
+    res.status(500).json({ error });
   }
 });
 
-module.exports = router;
+export default router;
 ```
 
-#### 3c. Teams Route (`server/routes/teams.js`)
+#### 3c. Teams Route (`server/src/routes/teams.ts`)
 
-```javascript
-const express = require('express');
-const axios = require('axios');
-const Team = require('../models/Team');
+```typescript
+import express, { Request, Response } from 'express';
+import axios from 'axios';
+import Team from '../models/Team';
+
 const router = express.Router();
 
 const PYTHON_URL = process.env.PYTHON_API_URL;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-function isFresh(doc) {
-  return doc?.lastUpdated &&
+function isFresh(doc: { lastUpdated?: Date }): boolean {
+  return doc?.lastUpdated !== undefined &&
     (Date.now() - new Date(doc.lastUpdated).getTime()) < CACHE_TTL_MS;
 }
 
 // Get all teams
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const cached = await Team.find({});
     if (cached.length === 30) return res.json(cached);
@@ -1135,12 +1217,13 @@ router.get('/', async (req, res) => {
     const { data } = await axios.get(`${PYTHON_URL}/teams`);
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const error = err instanceof Error ? err.message : 'Unknown error';
+    res.status(500).json({ error });
   }
 });
 
 // Get single team
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const cached = await Team.findOne({ id });
@@ -1155,22 +1238,43 @@ router.get('/:id', async (req, res) => {
     );
     res.json(updated);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const error = err instanceof Error ? err.message : 'Unknown error';
+    res.status(500).json({ error });
   }
 });
 
-module.exports = router;
+export default router;
 ```
 
-#### 3d. Register routes in `server/server.js`
+#### 3d. Register routes in `server/src/server.ts`
 
-Add these lines to `server.js` after the middleware setup:
-```javascript
-const playerRoutes = require('./routes/players');
-const teamRoutes = require('./routes/teams');
+Update `server/src/server.ts` to include the routers after the middleware setup:
+```typescript
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import playerRoutes from './routes/players';
+import teamRoutes from './routes/teams';
+
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+mongoose.connect(process.env.MONGODB_URI as string)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB error:', err));
+
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/players', playerRoutes);
 app.use('/api/teams', teamRoutes);
+
+app.listen(process.env.PORT || 5000, () =>
+  console.log(`Server running on port ${process.env.PORT || 5000}`)
+);
 ```
 
 #### Phase 3 Verification
@@ -1428,10 +1532,10 @@ VITE_API_URL=https://your-render-app-name.onrender.com/api
 ```
 (Fill in the actual Render URL after creating the service in 5c.)
 
-#### 5b. Add a Render build script to root `package.json`
+#### 5b. Add Render build scripts to root `package.json`
 
 ```json
-"build": "npm run build --prefix client"
+"build": "npm run build --prefix server && npm run build --prefix client"
 ```
 
 #### 5c. Deploy to Render
@@ -1441,8 +1545,8 @@ VITE_API_URL=https://your-render-app-name.onrender.com/api
    - Connect your GitHub repo
    - Name: `nba-statistics-api`
    - Root Directory: `server`
-   - Build Command: `npm install`
-   - Start Command: `node server.js`
+   - Build Command: `npm install && npm run build`
+   - Start Command: `node dist/server.js`
    - Environment Variables: add `MONGODB_URI` and `NODE_ENV=production`
 3. Go to **render.com** → New → **Static Site**
    - Connect the same GitHub repo
@@ -1471,6 +1575,24 @@ This takes 10-20 minutes. Wait for it to complete, then visit the Render URL to 
 - Player search works and returns data
 - Team grid shows all 30 teams
 - MongoDB Atlas shows `lastUpdated` timestamps from the ingest run
+
+---
+
+### Phase 6: Documentation Refactoring — ⬜ Not Started
+
+**Goal:** Organize project documentation in a dedicated `docs/` folder. Move master project plan and establish a single source of truth for all documentation.
+
+#### 6a. Create docs folder and move PROJECT_PLAN.md
+
+1. Create `NBAStatistics/docs/` folder
+2. Move `PROJECT_PLAN.md` from root to `docs/PROJECT_PLAN.md`
+3. Update `.gitignore` if needed (docs folder should be tracked)
+4. Commit with message: `Phase 6: establish docs folder for project documentation`
+
+#### Phase 6 Verification
+- `docs/PROJECT_PLAN.md` exists at the new path
+- Git history shows the file move
+- No broken references in the file itself
 
 ---
 
