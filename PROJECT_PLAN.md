@@ -478,6 +478,8 @@ MongoDB Atlas is a free cloud-hosted MongoDB database. This is where all NBA dat
    - Replace `<password>` with the password you created in step 3
    - **Save this string** — you'll paste it into `.env` files in the next steps
 
+   connection string: mongodb+srv://nba-admin:kitty7Jazz$@nba-stats.ywosupe.mongodb.net/?appName=nba-stats
+
 ---
 
 ### Step 3: Create the GitHub Repository
@@ -647,9 +649,21 @@ If collections are empty, it means the app hasn't fetched data yet — search fo
 
 Each phase is designed to be fully self-contained and executable independently. Complete and verify each phase before starting the next.
 
+### Progress Tracker
+
+Status legend: ✅ Complete · 🚧 In Progress · ⬜ Not Started
+
+| Phase | Description | Status |
+|---|---|---|
+| 1 | Project Setup & Infrastructure | ✅ Complete |
+| 2 | Python API Layer | ✅ Complete |
+| 3 | Express Backend | 🚧 In Progress |
+| 4 | React Frontend | ⬜ Not Started |
+| 5 | Production Deployment | ⬜ Not Started |
+
 ---
 
-### Phase 1: Project Setup & Infrastructure
+### Phase 1: Project Setup & Infrastructure — ✅ Complete
 
 **Goal:** Create the monorepo skeleton with all three services running locally and communicating with each other. End of this phase: `npm run dev` from the root starts React on :3000, Express on :5000, and FastAPI on :8000.
 
@@ -811,7 +825,7 @@ git push -u origin main
 
 ---
 
-### Phase 2: Python API Layer
+### Phase 2: Python API Layer — ✅ Complete
 
 **Goal:** Implement all FastAPI endpoints that wrap nba_api. Express will call these endpoints. End of this phase: every endpoint returns real NBA data as clean JSON when called directly (test with the FastAPI docs at `localhost:8000/docs`).
 
@@ -1000,7 +1014,7 @@ if __name__ == "__main__":
 
 ---
 
-### Phase 3: Express Backend
+### Phase 3: Express Backend — 🚧 In Progress
 
 **Goal:** Implement all Express routes with MongoDB caching. Express sits between React and the Python API — it checks MongoDB first and only calls Python on a cache miss. End of this phase: all `/api/*` routes return data, MongoDB gets populated on first request.
 
