@@ -10,8 +10,8 @@ import {
   Button,
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { api } from '../api/client';
-import { Player, CareerStatSeason } from '../types/player';
+import { api } from '../../api/client';
+import { Player, CareerStatSeason } from '../../types/player';
 
 const careerColumns: GridColDef[] = [
   { field: 'SEASON_ID', headerName: 'Season', width: 100 },

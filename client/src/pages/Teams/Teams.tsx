@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRowParams } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
-import { Team } from '../types/team';
+import { api } from '../../api/client';
+import { Team } from '../../types/team';
 
 const columns: GridColDef[] = [
   { field: 'full_name', headerName: 'Team Name', flex: 1.5, minWidth: 180 },

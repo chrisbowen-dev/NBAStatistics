@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
-import Players from './Players';
-import Teams from './Teams';
+import Players from '../Players/Players';
+import Teams from '../Teams/Teams';
 
 export default function Home() {
   const [tab, setTab] = useState(0);

@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import PlayerDetail from './pages/PlayerDetail';
-import TeamDetail from './pages/TeamDetail';
-import Navbar from './components/Navbar';
+import Home from './pages/Home/Home';
+import PlayerDetail from './pages/PlayerDetail/PlayerDetail';
+import TeamDetail from './pages/TeamDetail/TeamDetail';
+import Navbar from './components/Navbar/Navbar';
 
 function App() {
   return (

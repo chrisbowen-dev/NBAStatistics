@@ -9,8 +9,8 @@ import {
   Button,
 } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { api } from '../api/client';
-import { TeamDetail as TeamDetailType, RosterPlayer } from '../types/team';
+import { api } from '../../api/client';
+import { TeamDetail as TeamDetailType, RosterPlayer } from '../../types/team';
 
 export default function TeamDetail() {
   const { id } = useParams<{ id: string }>();

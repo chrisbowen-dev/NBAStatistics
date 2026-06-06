@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Box, TextField, CircularProgress, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRowParams } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
+import { api } from '../../api/client';
 
 interface PlayerRow {
   id: number;
