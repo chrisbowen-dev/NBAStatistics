@@ -46,4 +46,17 @@ client/src/components/Badge/
 
 ---
 
+## Indentation
+
+All source files in this repository **must** use **tabs** for indentation — never spaces.
+
+- Tab width is displayed as **4 spaces** in editors (configured via `.editorconfig`).
+- This applies to all `.ts`, `.tsx`, `.css`, `.js`, `.cjs`, and `.json` files.
+- Never mix tabs and spaces within a file.
+- When creating or editing any file, use a single tab character per indentation level.
+
+The `.editorconfig` at the repo root and the ESLint `indent` rule enforce this automatically. If your editor is inserting spaces, check that it respects `.editorconfig`.
+
+---
+
 *More rules will be added here as the project evolves.*
