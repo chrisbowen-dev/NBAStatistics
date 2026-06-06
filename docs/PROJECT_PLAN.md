@@ -1495,9 +1495,74 @@ Key implementation notes:
 
 ---
 
-### Phase 5: Production Deployment — ⬜ Not Started (Deferred)
+### Phase 5: Production Deployment — ⬜ Not Started
 
-This phase is deferred. The site is fully functional locally and can be deployed when needed.
+**Goal:** Deploy Express + React to Render's free tier. MongoDB Atlas is already in the cloud. After this phase, the site is publicly accessible via a Render URL.
+
+**Context for this phase:**
+- The Python FastAPI service is NOT deployed — it only runs locally for the nightly ingest
+- Render free tier web services spin down after 15 minutes of inactivity; first cold-start request takes ~30 seconds
+- Render auto-deploys on every `git push` to `main`
+- The React app must use an environment variable for the API URL so it points to the Render Express URL in production instead of `localhost:5000`
+
+#### 5a. Update React API base URL for production
+
+In `client/src/api/client.ts`, change to:
+```typescript
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+});
+```
+
+Create `client/.env.production`:
+```
+VITE_API_URL=https://your-render-app-name.onrender.com/api
+```
+(Fill in the actual Render URL after creating the service in 5c.)
+
+#### 5b. Add Render build scripts to root `package.json`
+
+```json
+"build": "npm run build --prefix server && npm run build --prefix client"
+```
+
+#### 5c. Deploy to Render
+
+1. Push all code to GitHub: `git add . && git commit -m "Phase 5: production prep" && git push`
+2. Go to **render.com** → New → **Web Service**
+   - Connect your GitHub repo
+   - Name: `nba-statistics-api`
+   - Root Directory: `server`
+   - Build Command: `npm install && npm run build`
+   - Start Command: `node dist/server.js`
+   - Environment Variables: add `MONGODB_URI` and `NODE_ENV=production`
+3. Go to **render.com** → New → **Static Site**
+   - Connect the same GitHub repo
+   - Name: `nba-statistics-client`
+   - Root Directory: `client`
+   - Build Command: `npm install && npm run build`
+   - Publish Directory: `dist`
+   - Environment Variables: add `VITE_API_URL=https://nba-statistics-api.onrender.com/api`
+4. Note your Express service URL from the Render dashboard and update `client/.env.production`
+5. Push again to trigger a rebuild with the correct URL
+
+#### 5d. Seed MongoDB Atlas before going live
+
+Before the site is ready to show anyone, run the nightly ingest locally to fully populate MongoDB:
+```bash
+cd python-api
+venv\Scripts\activate
+python scripts/nightly_ingest.py
+```
+
+This takes 10-20 minutes. Wait for it to complete, then visit the Render URL to confirm the site loads with real data.
+
+#### Phase 5 Verification
+- Render dashboard shows both services as "Live"
+- Public Render URL loads the home page
+- Player search works and returns data
+- Team grid shows all 30 teams
+- MongoDB Atlas shows `lastUpdated` timestamps from the ingest run
 
 ---
 
