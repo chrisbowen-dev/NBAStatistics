@@ -32,7 +32,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] as string);
     const cached = await Team.findOne({ id });
 
-    if (cached && isFresh(cached)) return res.json(cached);
+    if (cached) return res.json(cached);
 
     const { data } = await axios.get(`${PYTHON_URL}/teams/${String(id)}`);
     const updated = await Team.findOneAndUpdate(

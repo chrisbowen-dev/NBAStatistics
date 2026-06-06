@@ -37,8 +37,9 @@ router.get('/:id', async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] as string);
     const cached = await Player.findOne({ id });
 
-    if (cached && isFresh(cached)) return res.json(cached);
+    if (cached) return res.json(cached);
 
+    console.log('Player not found in cache. PYTHON_URL:', PYTHON_URL, 'ID:', id);
     const { data } = await axios.get(`${PYTHON_URL}/players/${String(id)}`);
     const updated = await Player.findOneAndUpdate(
       { id },

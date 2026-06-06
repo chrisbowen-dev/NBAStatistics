@@ -23,8 +23,8 @@ Building a portfolio-quality NBA statistics website using the MERN stack. The si
 
 ```
 NBAStatistics/
-├── docs/                          ← Documentation (PLANNED: move PROJECT_PLAN.md here)
-│   └── PROJECT_PLAN.md            ← Master project plan & implementation phases
+├── docs/                          ← Documentation (master project plan)
+│   └── PROJECT_PLAN.md            ← You are here
 ├── client/                        ← React app (TypeScript)
 │   ├── src/
 │   │   ├── components/
@@ -71,8 +71,6 @@ NBAStatistics/
 ├── package.json                   ← Root: concurrently dev script
 └── .gitignore
 ```
-
-**Future Refactoring:** Move `PROJECT_PLAN.md` from root to `docs/PROJECT_PLAN.md` to centralize all project documentation in one folder.
 
 ---
 
@@ -667,10 +665,10 @@ Status legend: ✅ Complete · 🚧 In Progress · ⬜ Not Started
 |---|---|---|
 | 1 | Project Setup & Infrastructure | ✅ Complete |
 | 2 | Python API Layer | ✅ Complete |
-| 3 | Express Backend | 🚧 In Progress |
-| 4 | React Frontend | ⬜ Not Started |
+| 3 | Express Backend | ✅ Complete |
+| 4 | React Frontend | ✅ Complete |
 | 5 | Production Deployment | ⬜ Not Started |
-| 6 | Documentation Refactoring | ⬜ Not Started |
+| 6 | Documentation Refactoring | 🚧 In Progress |
 
 ---
 
@@ -1054,7 +1052,7 @@ if __name__ == "__main__":
 
 ---
 
-### Phase 3: Express Backend — 🚧 In Progress
+### Phase 3: Express Backend — ✅ Complete
 
 **Goal:** Implement all Express routes with MongoDB caching. Express sits between React and the Python API — it checks MongoDB first and only calls Python on a cache miss. End of this phase: all `/api/*` routes return data, MongoDB gets populated on first request.
 
@@ -1143,18 +1141,14 @@ import Player from '../models/Player';
 const router = express.Router();
 
 const PYTHON_URL = process.env.PYTHON_API_URL;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-function isFresh(doc: { lastUpdated?: Date }): boolean {
-  return doc?.lastUpdated !== undefined &&
-    (Date.now() - new Date(doc.lastUpdated).getTime()) < CACHE_TTL_MS;
-}
 
 // Search players
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { name = '' } = req.query;
-    const nameStr = Array.isArray(name) ? name[0] : name;
+    const nameStr = Array.isArray(name)
+      ? String(name[0] ?? '')
+      : String(name ?? '');
     const regex = new RegExp(nameStr, 'i');
     const cached = await Player.find({ full_name: regex }).limit(50);
     if (cached.length > 0) return res.json(cached);
@@ -1170,12 +1164,13 @@ router.get('/', async (req: Request, res: Response) => {
 // Get single player
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params['id'] as string);
     const cached = await Player.findOne({ id });
 
-    if (cached && isFresh(cached)) return res.json(cached);
+    if (cached) return res.json(cached);
 
-    const { data } = await axios.get(`${PYTHON_URL}/players/${id}`);
+    console.log('Player not found in cache. PYTHON_URL:', PYTHON_URL, 'ID:', id);
+    const { data } = await axios.get(`${PYTHON_URL}/players/${String(id)}`);
     const updated = await Player.findOneAndUpdate(
       { id },
       { ...data, id, lastUpdated: new Date() },
@@ -1201,12 +1196,6 @@ import Team from '../models/Team';
 const router = express.Router();
 
 const PYTHON_URL = process.env.PYTHON_API_URL;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
-function isFresh(doc: { lastUpdated?: Date }): boolean {
-  return doc?.lastUpdated !== undefined &&
-    (Date.now() - new Date(doc.lastUpdated).getTime()) < CACHE_TTL_MS;
-}
 
 // Get all teams
 router.get('/', async (req: Request, res: Response) => {
@@ -1225,12 +1214,12 @@ router.get('/', async (req: Request, res: Response) => {
 // Get single team
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params['id'] as string);
     const cached = await Team.findOne({ id });
 
-    if (cached && isFresh(cached)) return res.json(cached);
+    if (cached) return res.json(cached);
 
-    const { data } = await axios.get(`${PYTHON_URL}/teams/${id}`);
+    const { data } = await axios.get(`${PYTHON_URL}/teams/${String(id)}`);
     const updated = await Team.findOneAndUpdate(
       { id },
       { ...data, id, lastUpdated: new Date() },
@@ -1287,7 +1276,7 @@ app.listen(process.env.PORT || 5000, () =>
 
 ---
 
-### Phase 4: React Frontend
+### Phase 4: React Frontend — ✅ Complete
 
 **Goal:** Build all pages and wire them to the Express API. End of this phase: the full website is usable — search for players, view detail pages, browse teams, view team rosters. All data comes from Express via Axios.
 
@@ -1360,9 +1349,8 @@ export interface Team {
 }
 
 export interface TeamDetail extends Team {
-  details: Record<string, unknown>;
   roster: RosterPlayer[];
-  stats: Record<string, unknown>;
+  currentSeasonStats: Record<string, unknown>;
 }
 
 export interface RosterPlayer {
@@ -1381,7 +1369,7 @@ export interface RosterPlayer {
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 ```
 
@@ -1491,7 +1479,7 @@ Calls `GET /api/teams/:id` on mount using `id` from `useParams()`.
 
 Key implementation notes:
 - Show team full name + city as heading
-- Show wins/losses/win% from `stats` object
+- Show wins/losses/win% from `currentSeasonStats` object
 - Roster `<DataGrid>` columns: PLAYER (clickable link to `/players/:PLAYER_ID`), NUM, POSITION, AGE
 - Make player names clickable using the DataGrid `renderCell` prop to render a `<Link>`
 
@@ -1507,78 +1495,13 @@ Key implementation notes:
 
 ---
 
-### Phase 5: Production Deployment
+### Phase 5: Production Deployment — ⬜ Not Started (Deferred)
 
-**Goal:** Deploy Express + React to Render's free tier. MongoDB Atlas is already in the cloud. After this phase, the site is publicly accessible via a Render URL.
-
-**Context for this phase:**
-- The Python FastAPI service is NOT deployed — it only runs locally for the nightly ingest
-- Render free tier web services spin down after 15 minutes of inactivity; first cold-start request takes ~30 seconds
-- Render auto-deploys on every `git push` to `main`
-- The React app must use an environment variable for the API URL so it points to the Render Express URL in production instead of `localhost:5000`
-
-#### 5a. Update React API base URL for production
-
-In `client/src/api/client.ts`, change to:
-```typescript
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-});
-```
-
-Create `client/.env.production`:
-```
-VITE_API_URL=https://your-render-app-name.onrender.com/api
-```
-(Fill in the actual Render URL after creating the service in 5c.)
-
-#### 5b. Add Render build scripts to root `package.json`
-
-```json
-"build": "npm run build --prefix server && npm run build --prefix client"
-```
-
-#### 5c. Deploy to Render
-
-1. Push all code to GitHub: `git add . && git commit -m "Phase 5: production prep" && git push`
-2. Go to **render.com** → New → **Web Service**
-   - Connect your GitHub repo
-   - Name: `nba-statistics-api`
-   - Root Directory: `server`
-   - Build Command: `npm install && npm run build`
-   - Start Command: `node dist/server.js`
-   - Environment Variables: add `MONGODB_URI` and `NODE_ENV=production`
-3. Go to **render.com** → New → **Static Site**
-   - Connect the same GitHub repo
-   - Name: `nba-statistics-client`
-   - Root Directory: `client`
-   - Build Command: `npm install && npm run build`
-   - Publish Directory: `dist`
-   - Environment Variables: add `VITE_API_URL=https://nba-statistics-api.onrender.com/api`
-4. Note your Express service URL from the Render dashboard and update `client/.env.production`
-5. Push again to trigger a rebuild with the correct URL
-
-#### 5d. Seed MongoDB Atlas before going live
-
-Before the site is ready to show anyone, run the nightly ingest locally to fully populate MongoDB:
-```bash
-cd python-api
-venv\Scripts\activate
-python scripts/nightly_ingest.py
-```
-
-This takes 10-20 minutes. Wait for it to complete, then visit the Render URL to confirm the site loads with real data.
-
-#### Phase 5 Verification
-- Render dashboard shows both services as "Live"
-- Public Render URL loads the home page
-- Player search works and returns data
-- Team grid shows all 30 teams
-- MongoDB Atlas shows `lastUpdated` timestamps from the ingest run
+This phase is deferred. The site is fully functional locally and can be deployed when needed.
 
 ---
 
-### Phase 6: Documentation Refactoring — ⬜ Not Started
+### Phase 6: Documentation Refactoring — 🚧 In Progress
 
 **Goal:** Organize project documentation in a dedicated `docs/` folder. Move master project plan and establish a single source of truth for all documentation.
 
@@ -1598,12 +1521,12 @@ This takes 10-20 minutes. Wait for it to complete, then visit the Render URL to 
 
 ## Verification Checklist
 
-- [ ] `npm run dev` from root starts all 3 services without errors
-- [ ] `localhost:3000` loads the home page with Player and Team tabs
-- [ ] Typing in player search returns matching players
-- [ ] Clicking a player navigates to `/players/:id` with bio and stats
-- [ ] Teams tab shows all 30 NBA teams
-- [ ] Clicking a team navigates to `/teams/:id` with stats and roster
-- [ ] Roster player names link to their player detail pages
-- [ ] MongoDB Atlas dashboard shows cached documents after first load
-- [ ] Running `nightly_ingest.py` manually completes without errors and updates `lastUpdated` timestamps in Atlas
+- [x] `npm run dev` from root starts all 3 services without errors
+- [x] `localhost:3000` loads the home page with Player and Team tabs
+- [x] Typing in player search returns matching players
+- [x] Clicking a player navigates to `/players/:id` with bio and stats
+- [x] Teams tab shows all 30 NBA teams
+- [x] Clicking a team navigates to `/teams/:id` with stats and roster
+- [x] Roster player names link to their player detail pages
+- [x] MongoDB Atlas dashboard shows cached documents after first load
+- [x] Running `nightly_ingest.py` manually completes without errors and updates `lastUpdated` timestamps in Atlas
