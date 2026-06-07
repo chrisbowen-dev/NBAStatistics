@@ -22,6 +22,7 @@ from nba_api.stats.endpoints import (
     playercareerstats,
     commonteamroster,
     teamdashboardbygeneralsplits,
+    teamdetails,
 )
 
 # ---------------------------------------------------------------------------
@@ -92,6 +93,16 @@ def ingest_teams() -> None:
         team_name = team["full_name"]
 
         try:
+            # --- Fetch franchise details ---
+            _log(f"  [{team_name}] Fetching franchise details (TeamDetails)...")
+            details_endpoint = teamdetails.TeamDetails(team_id=team_id)
+            time.sleep(1)  # rate limit
+
+            # "TeamBackground" is the primary result set -- single row with arena,
+            # owner, head coach, conf/div rank, and other franchise metadata.
+            details_list = details_endpoint.get_normalized_dict()["TeamBackground"]
+            details_data = details_list[0] if details_list else {}
+
             # --- Fetch roster ---
             _log(f"  [{team_name}] Fetching roster (CommonTeamRoster)...")
             roster_endpoint = commonteamroster.CommonTeamRoster(team_id=team_id)
@@ -119,6 +130,7 @@ def ingest_teams() -> None:
             # city, state, year_founded) then overlay fetched data.
             doc = {
                 **team,
+                "details": details_data,
                 "roster": roster_data,
                 "currentSeasonStats": overall_stats,
                 "lastUpdated": _now_utc(),
