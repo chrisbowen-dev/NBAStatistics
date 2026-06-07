@@ -72,14 +72,20 @@ export default function TeamDetail() {
 						<div>
 							<h1 className="td-team-name">{team.full_name}</h1>
 							<div className="td-meta">
-								<span className="td-meta-item">{team.city}, {team.state} → Est. {team.year_founded}</span>
-								<span className="td-meta-dot">•</span>
-								<span className="td-meta-item">{team.abbreviation}</span>
-								{(team.details?.CONF_RANK != null && team.details?.DIV_RANK != null) && (
-									<>
+								<div className="td-meta-row">
+									<span className="td-meta-item">{team.city}, {team.state}</span>
+									<span className="td-meta-dot">•</span>
+									<span className="td-meta-item">Est. {team.year_founded}</span>
+								</div>
+								<div className="td-meta-row">
+									<span className="td-meta-item">{team.abbreviation}</span>
+								</div>
+								{(team.standings?.conference != null && team.standings?.division != null) && (
+									<div className="td-meta-row">
+										<span className="td-meta-item">{team.standings.conference}</span>
 										<span className="td-meta-dot">•</span>
-										<span className="td-meta-item">Conf. Rank {team.details.CONF_RANK} → Div. Rank {team.details.DIV_RANK}</span>
-									</>
+										<span className="td-meta-item">{team.standings.division}</span>
+									</div>
 								)}
 							</div>
 						</div>

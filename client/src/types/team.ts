@@ -11,28 +11,26 @@ export interface Team {
 /** TeamBackground result set from nba_api TeamDetails endpoint */
 export interface TeamBackground {
 	TEAM_ID: number;
-	TEAM_CITY: string;
-	TEAM_NAME: string;
-	TEAM_ABBREVIATION: string;
-	TEAM_CONFERENCE: string;
-	TEAM_DIVISION: string;
-	TEAM_CODE: string;
-	TEAM_SLUG: string;
-	W: number;
-	L: number;
-	PCT: number;
-	CONF_RANK: number;
-	DIV_RANK: number;
-	MIN_YEAR: string;
-	MAX_YEAR: string;
-	LEAGUE_ID: string;
-	SEASON_YEAR: string;
+	ABBREVIATION: string;
+	NICKNAME: string;
+	YEARFOUNDED: number;
+	CITY: string;
 	ARENA: string;
-	ARENA_CAPACITY: string;
+	ARENACAPACITY: string;
 	OWNER: string;
 	GENERALMANAGER: string;
 	HEADCOACH: string;
 	DLEAGUEAFFILIATION: string;
+}
+
+/** League standings from nba_api LeagueStandingsV3 endpoint */
+export interface TeamStandings {
+	conf_rank: number;
+	div_rank: number;
+	conference: string;
+	division: string;
+	conf_record: string;
+	div_record: string;
 }
 
 /** OverallTeamDashboard result set from nba_api TeamDashboardByGeneralSplits endpoint */
@@ -117,6 +115,7 @@ export interface RosterPlayer {
 
 export interface TeamDetail extends Team {
 	details?: TeamBackground;
+	standings?: TeamStandings;
 	roster: RosterPlayer[];
 	currentSeasonStats: TeamSeasonStats;
 }

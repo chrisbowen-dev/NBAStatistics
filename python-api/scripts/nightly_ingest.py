@@ -23,6 +23,7 @@ from nba_api.stats.endpoints import (
     commonteamroster,
     teamdashboardbygeneralsplits,
     teamdetails,
+    leaguestandingsv3,
 )
 
 # ---------------------------------------------------------------------------
@@ -84,6 +85,23 @@ def ingest_teams() -> None:
     all_teams = teams.get_teams()  # static -- no network call
     _log(f"  Found {len(all_teams)} teams in static data.")
 
+    # --- Fetch league standings once for all 30 teams ---
+    _log("  Fetching league standings (LeagueStandingsV3)...")
+    standings_rows = leaguestandingsv3.LeagueStandingsV3().get_normalized_dict()["Standings"]
+    time.sleep(1)  # rate limit
+    standings_by_team_id = {
+        row["TeamID"]: {
+            "conf_rank": row["PlayoffRank"],
+            "div_rank": row["DivisionRank"],
+            "conference": row["Conference"],
+            "division": row["Division"],
+            "conf_record": row["ConferenceRecord"],
+            "div_record": row["DivisionRecord"],
+        }
+        for row in standings_rows
+    }
+    _log(f"  Standings fetched for {len(standings_by_team_id)} teams.")
+
     ops = []
     success_count = 0
     error_count = 0
@@ -131,6 +149,7 @@ def ingest_teams() -> None:
             doc = {
                 **team,
                 "details": details_data,
+                "standings": standings_by_team_id.get(team_id, {}),
                 "roster": roster_data,
                 "currentSeasonStats": overall_stats,
                 "lastUpdated": _now_utc(),
