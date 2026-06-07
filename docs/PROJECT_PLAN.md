@@ -486,8 +486,6 @@ MongoDB Atlas is a free cloud-hosted MongoDB database. This is where all NBA dat
    - Replace `<password>` with the password you created in step 3
    - **Save this string** — you'll paste it into `.env` files in the next steps
 
-   connection string: mongodb+srv://nba-admin:kitty7Jazz$@nba-stats.ywosupe.mongodb.net/?appName=nba-stats
-
 ---
 
 ### Step 3: Create the GitHub Repository
