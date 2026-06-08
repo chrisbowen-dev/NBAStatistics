@@ -4,6 +4,7 @@ import { ArrowLeft, TrendingUp, Activity, Users } from 'lucide-react';
 import { api } from '../../api/client';
 import { Player } from '../../types/player';
 import { getTeamColors } from '../../utils/teamColors';
+import { getPlayerHeadshotUrl } from '../../utils/nbaImages';
 import './PlayerDetail.css';
 
 function calcAge(birthdate: string): number | null {
@@ -32,6 +33,7 @@ export default function PlayerDetail() {
 	const [player, setPlayer] = useState<Player | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+	const [headshotError, setHeadshotError] = useState(false);
 
 	useEffect(() => {
 		if (!id) return;
@@ -91,7 +93,16 @@ export default function PlayerDetail() {
 
 					<div className="pd-hero">
 						<div className="pd-avatar">
-							{info.JERSEY ? `#${info.JERSEY}` : '—'}
+							{!headshotError ? (
+								<img
+									className="pd-avatar-img"
+									src={getPlayerHeadshotUrl(player.id)}
+									alt={player.full_name || info.DISPLAY_FIRST_LAST || 'Player headshot'}
+									onError={() => setHeadshotError(true)}
+								/>
+							) : (
+								info.JERSEY ? `#${info.JERSEY}` : '—'
+							)}
 						</div>
 						<div>
 							<h1 className="pd-player-name">

@@ -87,6 +87,14 @@
 	font-weight: 700;
 	flex-shrink: 0;
 	letter-spacing: 0.05em;
+	overflow: hidden;
+}
+
+.pd-avatar-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: top center;
 }
 
 .pd-player-name {

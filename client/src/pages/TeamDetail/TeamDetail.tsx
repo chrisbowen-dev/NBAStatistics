@@ -4,6 +4,8 @@ import { ArrowLeft, Trophy, TrendingUp, Users } from 'lucide-react';
 import { api } from '../../api/client';
 import { TeamDetail as TeamDetailType, RosterPlayer } from '../../types/team';
 import { getTeamColors } from '../../utils/teamColors';
+import { getTeamLogoUrl } from '../../utils/nbaImages';
+import PlayerAvatar from '../../components/PlayerAvatar/PlayerAvatar';
 import './TeamDetail.css';
 
 export default function TeamDetail() {
@@ -12,6 +14,7 @@ export default function TeamDetail() {
 	const [team, setTeam] = useState<TeamDetailType | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+	const [logoError, setLogoError] = useState(false);
 
 	useEffect(() => {
 		if (!id) return;
@@ -67,7 +70,16 @@ export default function TeamDetail() {
 
 					<div className="td-hero">
 						<div className="td-logo">
-							{team.abbreviation}
+							{!logoError ? (
+								<img
+									className="td-logo-img"
+									src={getTeamLogoUrl(team.id)}
+									alt={`${team.full_name} logo`}
+									onError={() => setLogoError(true)}
+								/>
+							) : (
+								team.abbreviation
+							)}
 						</div>
 						<div>
 							<h1 className="td-team-name">{team.full_name}</h1>
@@ -165,7 +177,11 @@ export default function TeamDetail() {
 								>
 									<div className="td-player-inner">
 										<div className="td-player-avatar">
-											#{player.NUM || '–'}
+											<PlayerAvatar
+												playerId={player.PLAYER_ID}
+												alt={player.PLAYER}
+												fallback={`#${player.NUM || '–'}`}
+											/>
 										</div>
 										<div className="td-player-info">
 											<div className="td-player-top-row">
