@@ -1,4 +1,4 @@
-﻿import { AppBar, Toolbar, Typography } from '@mui/material';
+import { AppBar, Toolbar, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 export default function Navbar() {

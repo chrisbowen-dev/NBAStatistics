@@ -1,1 +1,298 @@
-﻿
+/* ── Page shell ── */
+.pd-page {
+	min-height: 100vh;
+	background-color: var(--color-bg);
+}
+
+/* ── Shared container ── */
+.pd-container {
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 2rem 1.5rem;
+}
+
+/* ── Loading ── */
+.pd-loading {
+	display: flex;
+	justify-content: center;
+	padding: 4rem;
+}
+
+.pd-spinner {
+	width: 40px;
+	height: 40px;
+	border: 3px solid rgba(255, 255, 255, 0.1);
+	border-top-color: rgba(255, 255, 255, 0.6);
+	border-radius: 50%;
+	animation: pd-spin 0.75s linear infinite;
+}
+
+@keyframes pd-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* ── Error ── */
+.pd-error {
+	padding: 2rem 1.5rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1rem;
+}
+
+/* ── Header band ── */
+.pd-header {
+	border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Back button ── */
+.pd-back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	background: none;
+	border: none;
+	padding: 0;
+	margin-bottom: 1.5rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--color-fg-muted);
+	cursor: pointer;
+	transition: color 0.2s;
+	border-radius: 0;
+}
+
+.pd-back-btn:hover {
+	color: var(--color-fg);
+	border-color: transparent;
+}
+
+/* ── Hero row ── */
+.pd-hero {
+	display: flex;
+	align-items: flex-start;
+	gap: 1.5rem;
+}
+
+.pd-avatar {
+	width: 8rem;
+	height: 8rem;
+	background-color: var(--color-surface-raised);
+	border-radius: 1rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--color-fg-muted);
+	font-size: 1.25rem;
+	font-weight: 700;
+	flex-shrink: 0;
+	letter-spacing: 0.05em;
+}
+
+.pd-player-name {
+	font-size: 2.25rem;
+	font-weight: 700;
+	line-height: 1.2;
+	margin: 0 0 0.5rem;
+	color: var(--color-fg);
+}
+
+.pd-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.pd-meta-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	color: var(--color-fg-muted);
+	font-size: 0.9375rem;
+}
+
+.pd-meta-dot {
+	opacity: 0.5;
+}
+
+/* ── Stats grid ── */
+.pd-stats-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+	.pd-stats-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+/* ── Stat card ── */
+.pd-stat-card {
+	background-color: var(--color-surface-raised);
+	border: 1px solid var(--color-border);
+	border-radius: 0.5rem;
+	padding: 1.5rem;
+}
+
+.pd-stat-header {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.pd-stat-icon {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.pd-stat-label {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--color-fg);
+	margin: 0;
+}
+
+.pd-stat-value {
+	font-size: 1.875rem;
+	font-weight: 700;
+	color: var(--color-fg);
+	margin: 0;
+}
+
+.pd-stat-sublabel {
+	font-size: 0.875rem;
+	color: var(--color-fg-muted);
+	margin: 0.25rem 0 0;
+}
+
+/* ── Info grid ── */
+.pd-info-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+	.pd-info-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+/* ── Info card ── */
+.pd-info-card {
+	background-color: var(--color-surface-raised);
+	border: 1px solid var(--color-border);
+	border-radius: 0.5rem;
+	padding: 1.5rem;
+}
+
+.pd-info-title {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--color-fg);
+	margin: 0 0 1rem;
+}
+
+.pd-info-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.pd-info-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1rem;
+}
+
+.pd-info-key {
+	font-size: 0.875rem;
+	color: var(--color-fg-muted);
+	flex-shrink: 0;
+}
+
+.pd-info-val {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--color-fg);
+	text-align: right;
+}
+
+/* ── Career stats card ── */
+.pd-career-card {
+	background-color: var(--color-surface-raised);
+	border: 1px solid var(--color-border);
+	border-radius: 0.5rem;
+	padding: 1.5rem;
+}
+
+.pd-career-title {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--color-fg);
+	margin: 0 0 1rem;
+}
+
+/* ── Career table ── */
+.pd-table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.pd-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	white-space: nowrap;
+}
+
+.pd-table thead tr {
+	border-bottom: 1px solid var(--color-border);
+}
+
+.pd-table th {
+	padding: 0.5rem 0.75rem;
+	text-align: left;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--color-fg-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.pd-table td {
+	padding: 0.625rem 0.75rem;
+	color: var(--color-fg);
+}
+
+.pd-table tbody tr {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+	transition: background-color 0.15s;
+}
+
+.pd-table tbody tr:hover {
+	background-color: rgba(255, 255, 255, 0.04);
+}
+
+.pd-table tbody tr:last-child {
+	border-bottom: none;
+}
+
+/* ── Empty state ── */
+.pd-empty {
+	text-align: center;
+	padding: 2rem;
+	color: var(--color-fg-muted);
+}

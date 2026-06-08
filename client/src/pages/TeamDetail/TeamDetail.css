@@ -1,6 +1,7 @@
 /* ── Page shell ── */
 .td-page {
 	min-height: 100vh;
+	background-color: var(--color-bg);
 }
 
 /* ── Shared container ── */
@@ -20,8 +21,8 @@
 .td-spinner {
 	width: 40px;
 	height: 40px;
-	border: 3px solid rgba(0, 0, 0, 0.1);
-	border-top-color: rgba(0, 0, 0, 0.6);
+	border: 3px solid rgba(255, 255, 255, 0.1);
+	border-top-color: rgba(255, 255, 255, 0.6);
 	border-radius: 50%;
 	animation: td-spin 0.75s linear infinite;
 }
@@ -41,7 +42,7 @@
 
 /* ── Header band ── */
 .td-header {
-	border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+	border-bottom: 1px solid var(--color-border);
 }
 
 /* ── Back button ── */
@@ -55,14 +56,14 @@
 	margin-bottom: 1.5rem;
 	font-size: 0.875rem;
 	font-weight: 500;
-	color: #717182;
+	color: var(--color-fg-muted);
 	cursor: pointer;
 	transition: color 0.2s;
 	border-radius: 0;
 }
 
 .td-back-btn:hover {
-	color: #0d0d0d;
+	color: var(--color-fg);
 	border-color: transparent;
 }
 
@@ -76,12 +77,12 @@
 .td-logo {
 	width: 8rem;
 	height: 8rem;
-	background-color: #ececf0;
+	background-color: var(--color-surface-raised);
 	border-radius: 1rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #717182;
+	color: var(--color-fg-muted);
 	font-size: 1.25rem;
 	font-weight: 700;
 	flex-shrink: 0;
@@ -93,7 +94,7 @@
 	font-weight: 700;
 	line-height: 1.2;
 	margin: 0 0 0.5rem;
-	color: #0d0d0d;
+	color: var(--color-fg);
 }
 
 .td-meta {
@@ -107,7 +108,7 @@
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 0.75rem;
-	color: #717182;
+	color: var(--color-fg-muted);
 	font-size: 0.9375rem;
 }
 
@@ -131,8 +132,8 @@
 
 /* ── Stat card ── */
 .td-stat-card {
-	background-color: #ffffff;
-	border: 1px solid rgba(0, 0, 0, 0.1);
+	background-color: var(--color-surface-raised);
+	border: 1px solid var(--color-border);
 	border-radius: 0.5rem;
 	padding: 1.5rem;
 }
@@ -157,27 +158,27 @@
 .td-stat-label {
 	font-size: 0.9375rem;
 	font-weight: 600;
-	color: #0d0d0d;
+	color: var(--color-fg);
 	margin: 0;
 }
 
 .td-stat-value {
 	font-size: 1.875rem;
 	font-weight: 700;
-	color: #0d0d0d;
+	color: var(--color-fg);
 	margin: 0;
 }
 
 .td-stat-sublabel {
 	font-size: 0.875rem;
-	color: #717182;
+	color: var(--color-fg-muted);
 	margin: 0.25rem 0 0;
 }
 
 /* ── Roster card ── */
 .td-roster-card {
-	background-color: #ffffff;
-	border: 1px solid rgba(0, 0, 0, 0.1);
+	background-color: var(--color-surface-raised);
+	border: 1px solid var(--color-border);
 	border-radius: 0.5rem;
 	padding: 1.5rem;
 }
@@ -188,7 +189,7 @@
 	gap: 0.5rem;
 	font-size: 0.9375rem;
 	font-weight: 600;
-	color: #0d0d0d;
+	color: var(--color-fg);
 	margin: 0 0 1rem;
 }
 
@@ -207,8 +208,8 @@
 
 /* ── Player card button ── */
 .td-player-btn {
-	background-color: rgba(236, 236, 240, 0.3);
-	border: 1px solid transparent;
+	background-color: rgba(255, 255, 255, 0.03);
+	border: 1px solid var(--color-border);
 	border-radius: 0.5rem;
 	padding: 1rem;
 	cursor: pointer;
@@ -219,8 +220,8 @@
 }
 
 .td-player-btn:hover {
-	background-color: rgba(236, 236, 240, 0.6);
-	border-color: rgba(3, 2, 19, 0.2);
+	background-color: rgba(255, 255, 255, 0.07);
+	border-color: rgba(255, 255, 255, 0.2);
 }
 
 .td-player-inner {
@@ -232,12 +233,12 @@
 .td-player-avatar {
 	width: 3rem;
 	height: 3rem;
-	background-color: #ececf0;
+	background-color: var(--color-surface-raised);
 	border-radius: 0.5rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #717182;
+	color: var(--color-fg-muted);
 	font-size: 0.75rem;
 	font-weight: 600;
 	flex-shrink: 0;
@@ -258,7 +259,7 @@
 .td-player-name {
 	font-weight: 600;
 	font-size: 0.9375rem;
-	color: #0d0d0d;
+	color: var(--color-fg);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -267,7 +268,7 @@
 .td-player-pos {
 	font-size: 0.8125rem;
 	font-weight: 500;
-	color: #717182;
+	color: var(--color-fg-muted);
 	flex-shrink: 0;
 	margin-left: 0.5rem;
 }
@@ -280,12 +281,12 @@
 }
 
 .td-player-stat-key {
-	color: #717182;
+	color: var(--color-fg-muted);
 }
 
 .td-player-stat-val {
 	font-weight: 500;
-	color: #0d0d0d;
+	color: var(--color-fg);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -295,5 +296,5 @@
 .td-empty {
 	text-align: center;
 	padding: 2rem;
-	color: #717182;
+	color: var(--color-fg-muted);
 }
