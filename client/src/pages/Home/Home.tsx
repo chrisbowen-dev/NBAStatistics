@@ -1,19 +1,14 @@
-﻿import { useState } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
-import Players from '../Players/Players';
-import Teams from '../Teams/Teams';
+import { Box, Typography } from '@mui/material';
 
 export default function Home() {
-	const [tab, setTab] = useState(0);
-
 	return (
-		<Box sx={{ p: 3 }}>
-			<Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-				<Tab label="Players" />
-				<Tab label="Teams" />
-			</Tabs>
-			{tab === 0 && <Players />}
-			{tab === 1 && <Teams />}
+		<Box sx={{ p: 4, textAlign: 'center' }}>
+			<Typography variant="h4" sx={{ fontWeight: 600, mb: 1 }}>
+				NBA Statistics
+			</Typography>
+			<Typography variant="body1" sx={{ color: 'text.secondary' }}>
+				Browse players and teams using the navigation above.
+			</Typography>
 		</Box>
 	);
 }

@@ -19,8 +19,8 @@ router.get('/', async (req: Request, res: Response) => {
     const nameStr = Array.isArray(name)
       ? String(name[0] ?? '')
       : String(name ?? '');
-    const regex = new RegExp(nameStr, 'i');
-    const cached = await Player.find({ full_name: regex }).limit(50);
+    const query = nameStr ? { full_name: new RegExp(nameStr, 'i') } : {};
+    const cached = await Player.find(query).limit(500);
     if (cached.length > 0) return res.json(cached);
 
     const { data } = await axios.get(`${PYTHON_URL}/players/search?name=${nameStr}`);

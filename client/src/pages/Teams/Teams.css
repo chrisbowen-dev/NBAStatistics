@@ -1,1 +1,51 @@
-﻿
+.tm-page {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 2rem 1.5rem;
+}
+
+.tm-header {
+	margin-bottom: 2rem;
+}
+
+.tm-toolbar {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+.tm-search-wrap {
+	flex: 1;
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.tm-search-icon {
+	position: absolute;
+	left: 14px;
+	color: var(--color-fg-muted);
+	pointer-events: none;
+}
+
+.tm-search-input {
+	width: 100%;
+	padding: 0.75rem 1rem 0.75rem 2.75rem;
+	background: var(--color-surface-raised);
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	color: var(--color-fg);
+	font-size: 0.875rem;
+	font-family: inherit;
+	outline: none;
+	transition: border-color 0.15s;
+	box-sizing: border-box;
+}
+
+.tm-search-input::placeholder {
+	color: var(--color-fg-muted);
+}
+
+.tm-search-input:focus {
+	border-color: rgba(255, 255, 255, 0.3);
+}
