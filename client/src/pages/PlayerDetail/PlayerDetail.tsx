@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Activity, Users } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Activity, Users, Shield, Hand, Clock, Target, Crosshair, CheckCircle } from 'lucide-react';
 import { api } from '../../api/client';
 import { Player } from '../../types/player';
 import { getTeamColors } from '../../utils/teamColors';
@@ -27,10 +27,18 @@ function fmtStat(value: number | null | undefined): string {
 	return value.toFixed(1);
 }
 
+interface TeamStandings {
+	W: number;
+	L: number;
+	conf_rank: number;
+	conference: string;
+}
+
 export default function PlayerDetail() {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
 	const [player, setPlayer] = useState<Player | null>(null);
+	const [teamStandings, setTeamStandings] = useState<TeamStandings | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [headshotError, setHeadshotError] = useState(false);
@@ -40,7 +48,24 @@ export default function PlayerDetail() {
 		setLoading(true);
 		setError('');
 		api.get<Player>(`/players/${id}`)
-			.then(({ data }) => setPlayer(data))
+			.then(({ data }) => {
+				setPlayer(data);
+				const teamId = data.info?.TEAM_ID;
+				if (teamId) {
+					api.get(`/teams/${teamId}`)
+						.then(({ data: team }) => {
+							if (team.currentSeasonStats && team.standings) {
+								setTeamStandings({
+									W: team.currentSeasonStats.W,
+									L: team.currentSeasonStats.L,
+									conf_rank: team.standings.conf_rank,
+									conference: team.standings.conference,
+								});
+							}
+						})
+						.catch(() => {});
+				}
+			})
 			.catch(() => setError('Failed to load player. Make sure the server is running.'))
 			.finally(() => setLoading(false));
 	}, [id]);
@@ -174,6 +199,108 @@ export default function PlayerDetail() {
 						<p className="pd-stat-value">{fmtStat(latestSeason?.AST)}</p>
 						<p className="pd-stat-sublabel">Average assists</p>
 					</div>
+
+					<div
+						className="pd-stat-card"
+						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
+					>
+						<div className="pd-stat-header">
+							<div
+								className="pd-stat-icon"
+								style={{ backgroundColor: `color-mix(in srgb, ${colors.secondary} 20%, transparent)` }}
+							>
+								<Shield size={20} style={{ color: colors.secondary }} />
+							</div>
+							<h3 className="pd-stat-label">Steals Per Game</h3>
+						</div>
+						<p className="pd-stat-value">{fmtStat(latestSeason?.STL)}</p>
+						<p className="pd-stat-sublabel">Average steals</p>
+					</div>
+
+					<div
+						className="pd-stat-card"
+						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
+					>
+						<div className="pd-stat-header">
+							<div
+								className="pd-stat-icon"
+								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+							>
+								<Hand size={20} style={{ color: colors.primary }} />
+							</div>
+							<h3 className="pd-stat-label">Blocks Per Game</h3>
+						</div>
+						<p className="pd-stat-value">{fmtStat(latestSeason?.BLK)}</p>
+						<p className="pd-stat-sublabel">Average blocks</p>
+					</div>
+
+					<div
+						className="pd-stat-card"
+						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
+					>
+						<div className="pd-stat-header">
+							<div
+								className="pd-stat-icon"
+								style={{ backgroundColor: `color-mix(in srgb, ${colors.secondary} 20%, transparent)` }}
+							>
+								<Clock size={20} style={{ color: colors.secondary }} />
+							</div>
+							<h3 className="pd-stat-label">Minutes Per Game</h3>
+						</div>
+						<p className="pd-stat-value">{fmtStat(latestSeason?.MIN)}</p>
+						<p className="pd-stat-sublabel">Average minutes played</p>
+					</div>
+
+					<div
+						className="pd-stat-card"
+						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
+					>
+						<div className="pd-stat-header">
+							<div
+								className="pd-stat-icon"
+								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+							>
+								<Target size={20} style={{ color: colors.primary }} />
+							</div>
+							<h3 className="pd-stat-label">Field Goal %</h3>
+						</div>
+						<p className="pd-stat-value">{fmtPct(latestSeason?.FG_PCT)}</p>
+						<p className="pd-stat-sublabel">Field goal percentage</p>
+					</div>
+
+					<div
+						className="pd-stat-card"
+						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
+					>
+						<div className="pd-stat-header">
+							<div
+								className="pd-stat-icon"
+								style={{ backgroundColor: `color-mix(in srgb, ${colors.secondary} 20%, transparent)` }}
+							>
+								<Crosshair size={20} style={{ color: colors.secondary }} />
+							</div>
+							<h3 className="pd-stat-label">3-Point %</h3>
+						</div>
+						<p className="pd-stat-value">{fmtPct(latestSeason?.FG3_PCT)}</p>
+						<p className="pd-stat-sublabel">Three point percentage</p>
+					</div>
+
+					<div
+						className="pd-stat-card"
+						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
+					>
+						<div className="pd-stat-header">
+							<div
+								className="pd-stat-icon"
+								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+							>
+								<CheckCircle size={20} style={{ color: colors.primary }} />
+							</div>
+							<h3 className="pd-stat-label">Free Throw %</h3>
+						</div>
+						<p className="pd-stat-value">{fmtPct(latestSeason?.FT_PCT)}</p>
+						<p className="pd-stat-sublabel">Free throw percentage</p>
+					</div>
 				</div>
 
 				<div className="pd-info-grid">
@@ -253,6 +380,18 @@ export default function PlayerDetail() {
 									<span className="pd-info-val">#{info.JERSEY}</span>
 								</div>
 							)}
+							{teamStandings != null && (
+								<>
+									<div className="pd-info-row">
+										<span className="pd-info-key">Record</span>
+										<span className="pd-info-val">{teamStandings.W}–{teamStandings.L}</span>
+									</div>
+									<div className="pd-info-row">
+										<span className="pd-info-key">Seed</span>
+										<span className="pd-info-val">#{teamStandings.conf_rank} {teamStandings.conference}</span>
+									</div>
+								</>
+							)}
 						</div>
 					</div>
 				</div>
@@ -272,6 +411,7 @@ export default function PlayerDetail() {
 										<th>Season</th>
 										<th>Team</th>
 										<th>GP</th>
+										<th>MIN</th>
 										<th>PTS</th>
 										<th>REB</th>
 										<th>AST</th>
@@ -288,6 +428,7 @@ export default function PlayerDetail() {
 											<td>{s.SEASON_ID}</td>
 											<td>{s.TEAM_ABBREVIATION}</td>
 											<td>{s.GP ?? '—'}</td>
+											<td>{fmtStat(s.MIN)}</td>
 											<td>{fmtStat(s.PTS)}</td>
 											<td>{fmtStat(s.REB)}</td>
 											<td>{fmtStat(s.AST)}</td>

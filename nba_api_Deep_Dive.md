@@ -20,12 +20,13 @@
 9. [Player Tracking Data](#player-tracking-data)
 10. [Shot Charts](#shot-charts)
 11. [Play-by-Play](#play-by-play)
-12. [Live Game Data](#live-game-data)
-13. [Common Parameters Reference](#common-parameters-reference)
-14. [Output Formats](#output-formats)
-15. [Rate Limiting & NBA.com Blocking](#rate-limiting--nbacom-blocking)
-16. [Practical App Patterns](#practical-app-patterns)
-17. [Full Endpoint Catalog](#full-endpoint-catalog)
+12. [Playoff Data](#playoff-data)
+13. [Live Game Data](#live-game-data)
+14. [Common Parameters Reference](#common-parameters-reference)
+15. [Output Formats](#output-formats)
+16. [Rate Limiting & NBA.com Blocking](#rate-limiting--nbacom-blocking)
+17. [Practical App Patterns](#practical-app-patterns)
+18. [Full Endpoint Catalog](#full-endpoint-catalog)
 
 ---
 
@@ -779,6 +780,145 @@ df = pbp.get_data_frames()[0]
 # description — text description of the play
 # actionType — 'Made Shot', 'Missed Shot', 'Rebound', 'Foul', 'Turnover', 'Substitution', etc.
 # subType — more specific (e.g., 'Jump Shot', 'Offensive', etc.)
+```
+
+---
+
+## Playoff Data
+
+Playoff statistics are available across several endpoints. The key pattern is using `CommonPlayoffSeries` to get all game IDs, then feeding those into box score or game log endpoints to collect stats — which you can then aggregate per-series, per-round, or across the full playoffs yourself.
+
+### Bracket Structure — `CommonPlayoffSeries`
+
+Returns every game in the playoff bracket: who is home, who is away, and which game number it is within the series.
+
+```python
+from nba_api.stats.endpoints import commonplayoffseries
+
+series = commonplayoffseries.CommonPlayoffSeries(
+	season='2024-25',
+	league_id='00',         # '00' = NBA (always)
+	series_id_nullable=''   # leave empty for all series, or pass a specific SERIES_ID
+)
+
+df = series.playoff_series.get_data_frame()
+# Columns: GAME_ID, HOME_TEAM_ID, VISITOR_TEAM_ID, SERIES_ID, GAME_NUM
+```
+
+**Key things to know:**
+- One row per game, not per series — a 6-game series gives 6 rows.
+- `SERIES_ID` is the glue for grouping games into matchups.
+- `GAME_ID` links to every box score and play-by-play endpoint.
+- Round number is not a direct column — infer it from `SERIES_ID` or use the `po_round` filter on `LeagueDashPlayerStats`.
+
+### Compiling Stats Across All Playoff Games
+
+The API has no single "stats per series" endpoint — it thinks in games and seasons. The pattern is to collect every game's box score and aggregate yourself.
+
+```python
+import time
+import pandas as pd
+from nba_api.stats.endpoints import commonplayoffseries, boxscoretraditionalv3
+from nba_api.stats.static import teams
+
+# Step 1: get all playoff game IDs
+series = commonplayoffseries.CommonPlayoffSeries(season='2024-25')
+games_df = series.playoff_series.get_data_frame()
+game_ids = games_df['GAME_ID'].tolist()
+# A full playoff bracket is roughly 80–100 games
+
+# Step 2: loop and collect every player's box score
+all_player_games = []
+
+for game_id in game_ids:
+	box = boxscoretraditionalv3.BoxScoreTraditionalV3(game_id=str(game_id))
+	df = box.player_stats.get_data_frame()
+	df['GAME_ID'] = game_id
+	all_player_games.append(df)
+	time.sleep(1)  # 1 req/sec — ~90 seconds total for a full bracket
+
+# Step 3: one DataFrame with every player in every playoff game
+full_df = pd.concat(all_player_games, ignore_index=True)
+
+# Step 4: calculate aggregates
+player_totals = full_df.groupby('personId').agg(
+	GP=('gameId', 'count'),
+	PTS=('points', 'sum'),
+	REB=('reboundsTotal', 'sum'),
+	AST=('assists', 'sum'),
+).reset_index()
+
+player_totals['PPG'] = player_totals['PTS'] / player_totals['GP']
+```
+
+### Series-Level Aggregates
+
+Join `SERIES_ID` from `CommonPlayoffSeries` onto your game log rows, then group:
+
+```python
+# Merge SERIES_ID into the full player game DataFrame
+full_df = full_df.merge(
+	games_df[['GAME_ID', 'SERIES_ID']],
+	on='GAME_ID',
+	how='left'
+)
+
+# Per-series averages for a single player
+player_df = full_df[full_df['personId'] == 203999]
+
+by_series = player_df.groupby('SERIES_ID').agg(
+	GP=('gameId', 'count'),
+	PPG=('points', 'mean'),
+	RPG=('reboundsTotal', 'mean'),
+	APG=('assists', 'mean'),
+).reset_index()
+```
+
+### Switching Any Endpoint to Playoffs
+
+Nearly every endpoint that works for the regular season accepts `season_type_all_star='Playoffs'`:
+
+```python
+# League-wide playoff stats (all players, one call)
+from nba_api.stats.endpoints import leaguedashplayerstats
+
+playoff_leaders = leaguedashplayerstats.LeagueDashPlayerStats(
+	season='2024-25',
+	season_type_all_star='Playoffs',
+	measure_type_detailed_defense='Advanced',
+	per_mode_simple='PerGame'
+)
+df = playoff_leaders.league_dash_player_stats.get_data_frame()
+
+# Player career playoff splits (season by season)
+from nba_api.stats.endpoints import playercareerstats
+
+career = playercareerstats.PlayerCareerStats(player_id='203999')
+df_post = career.season_totals_post_season.get_data_frame()
+df_career_post = career.career_totals_post_season.get_data_frame()
+
+# Game-by-game playoff log for one player
+from nba_api.stats.endpoints import playergamelog
+
+log = playergamelog.PlayerGameLog(
+	player_id='203999',
+	season='2024-25',
+	season_type_all_star='Playoffs'
+)
+df_log = log.get_data_frames()[0]
+```
+
+### Filtering by Playoff Round
+
+The `po_round` parameter is available on `LeagueDashPlayerStats`, `LeagueDashTeamStats`, and related endpoints:
+
+```python
+# First round only
+first_round = leaguedashplayerstats.LeagueDashPlayerStats(
+	season='2024-25',
+	season_type_all_star='Playoffs',
+	po_round=1   # 1=First Round, 2=Semis, 3=Conf Finals, 4=Finals, 0=All
+)
 ```
 
 ---

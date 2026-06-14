@@ -8,6 +8,7 @@
 
 export interface PlayerInfo {
 	DISPLAY_FIRST_LAST: string;
+	TEAM_ID: number;
 	TEAM_NAME: string;
 	TEAM_ABBREVIATION: string;
 	POSITION: string;
@@ -26,6 +27,7 @@ export interface CareerStatSeason {
 	SEASON_ID: string;
 	TEAM_ABBREVIATION: string;
 	GP: number;
+	MIN: number;
 	PTS: number;
 	REB: number;
 	AST: number;

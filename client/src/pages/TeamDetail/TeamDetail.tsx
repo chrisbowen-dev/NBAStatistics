@@ -1,20 +1,101 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, TrendingUp, Users } from 'lucide-react';
+import { ArrowLeft, Trophy, TrendingUp, Users, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { api } from '../../api/client';
-import { TeamDetail as TeamDetailType, RosterPlayer } from '../../types/team';
+import { TeamDetail as TeamDetailType, RosterPlayer, RosterPlayerStats } from '../../types/team';
 import { getTeamColors } from '../../utils/teamColors';
 import { getTeamLogoUrl } from '../../utils/nbaImages';
 import PlayerAvatar from '../../components/PlayerAvatar/PlayerAvatar';
 import './TeamDetail.css';
 
+function fmtPct(value: number | null | undefined): string {
+	if (value == null) return '—';
+	return (value * 100).toFixed(1) + '%';
+}
+
+function fmtStat(value: number | null | undefined): string {
+	if (value == null) return '—';
+	return value.toFixed(1);
+}
+
+type SortKey =
+	| 'PLAYER' | 'POSITION' | 'GP' | 'PTS' | 'REB' | 'AST'
+	| 'STL' | 'BLK' | 'MIN' | 'FG_PCT' | 'FG3_PCT' | 'FT_PCT';
+
+interface Column {
+	key: SortKey;
+	label: string;
+	numeric: boolean;
+}
+
+const COLUMNS: Column[] = [
+	{ key: 'PLAYER', label: 'Player', numeric: false },
+	{ key: 'POSITION', label: 'Pos', numeric: false },
+	{ key: 'GP', label: 'GP', numeric: true },
+	{ key: 'PTS', label: 'PTS', numeric: true },
+	{ key: 'REB', label: 'REB', numeric: true },
+	{ key: 'AST', label: 'AST', numeric: true },
+	{ key: 'STL', label: 'STL', numeric: true },
+	{ key: 'BLK', label: 'BLK', numeric: true },
+	{ key: 'MIN', label: 'MIN', numeric: true },
+	{ key: 'FG_PCT', label: 'FG%', numeric: true },
+	{ key: 'FG3_PCT', label: '3P%', numeric: true },
+	{ key: 'FT_PCT', label: 'FT%', numeric: true },
+];
+
+function getSortValue(p: RosterPlayerStats, key: SortKey): string | number | null {
+	if (key === 'PLAYER') return (p.PLAYER ?? '').toLowerCase();
+	if (key === 'POSITION') return (p.POSITION ?? '').toLowerCase();
+	return p.stats ? p.stats[key] : null;
+}
+
+function formatCell(p: RosterPlayerStats, key: SortKey): string {
+	if (key === 'POSITION') return p.POSITION || '—';
+	if (key === 'GP') return p.stats?.GP != null ? String(p.stats.GP) : '—';
+	if (key === 'FG_PCT' || key === 'FG3_PCT' || key === 'FT_PCT') return fmtPct(p.stats?.[key]);
+	return fmtStat(p.stats?.[key as keyof NonNullable<RosterPlayerStats['stats']>] as number | null | undefined);
+}
+
 export default function TeamDetail() {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
 	const [team, setTeam] = useState<TeamDetailType | null>(null);
+	const [rosterStats, setRosterStats] = useState<RosterPlayerStats[]>([]);
+	const [sortKey, setSortKey] = useState<SortKey>('PTS');
+	const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [logoError, setLogoError] = useState(false);
+
+	function handleSort(col: Column) {
+		if (col.key === sortKey) {
+			setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+		} else {
+			setSortKey(col.key);
+			// Numbers default high→low, text defaults A→Z.
+			setSortDir(col.numeric ? 'desc' : 'asc');
+		}
+	}
+
+	const sortedRoster = useMemo(() => {
+		const rows = [...rosterStats];
+		rows.sort((a, b) => {
+			const av = getSortValue(a, sortKey);
+			const bv = getSortValue(b, sortKey);
+			// Missing values always sort to the bottom, regardless of direction.
+			if (av == null && bv == null) return 0;
+			if (av == null) return 1;
+			if (bv == null) return -1;
+			let cmp: number;
+			if (typeof av === 'string' && typeof bv === 'string') {
+				cmp = av.localeCompare(bv);
+			} else {
+				cmp = (av as number) - (bv as number);
+			}
+			return sortDir === 'asc' ? cmp : -cmp;
+		});
+		return rows;
+	}, [rosterStats, sortKey, sortDir]);
 
 	useEffect(() => {
 		if (!id) return;
@@ -24,6 +105,10 @@ export default function TeamDetail() {
 			.then(({ data }) => setTeam(data))
 			.catch(() => setError('Failed to load team. Make sure the server is running.'))
 			.finally(() => setLoading(false));
+
+		api.get<RosterPlayerStats[]>(`/teams/${id}/players`)
+			.then(({ data }) => setRosterStats(data))
+			.catch(() => setRosterStats([]));
 	}, [id]);
 
 	if (loading) {
@@ -48,7 +133,6 @@ export default function TeamDetail() {
 
 	const stats = team.currentSeasonStats;
 	const wins = stats.W ?? 0;
-	const losses = stats.L ?? 0;
 	const winPercentage = stats.W_PCT != null ? (stats.W_PCT * 100).toFixed(1) : null;
 
 	const roster: RosterPlayer[] = (team.roster || []) as RosterPlayer[];
@@ -159,49 +243,76 @@ export default function TeamDetail() {
 					</div>
 				</div>
 
-				<div className="td-roster-card">
+				<div
+					className="td-roster-card"
+					style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
+				>
 					<h3 className="td-roster-title">
 						<Users size={20} />
 						Team Roster
 					</h3>
 
-					{roster.length === 0 ? (
+					{rosterStats.length === 0 ? (
 						<div className="td-empty">No players available for this team</div>
 					) : (
-						<div className="td-roster-grid">
-							{roster.map((player, i) => (
-								<button
-									key={player.PLAYER_ID ?? i}
-									onClick={() => navigate(`/players/${player.PLAYER_ID}`)}
-									className="td-player-btn"
-								>
-									<div className="td-player-inner">
-										<div className="td-player-avatar">
-											<PlayerAvatar
-												playerId={player.PLAYER_ID}
-												alt={player.PLAYER}
-												fallback={`#${player.NUM || '–'}`}
-											/>
-										</div>
-										<div className="td-player-info">
-											<div className="td-player-top-row">
-												<span className="td-player-name">{player.PLAYER}</span>
-												<span className="td-player-pos">{player.POSITION}</span>
-											</div>
-											<div className="td-player-stats">
-												<div>
-													<span className="td-player-stat-key">Age: </span>
-													<span className="td-player-stat-val">{player.AGE}</span>
-												</div>
-												<div>
-													<span className="td-player-stat-key">Acq: </span>
-													<span className="td-player-stat-val">{player.HOW_ACQUIRED}</span>
-												</div>
-											</div>
-										</div>
-									</div>
-								</button>
-							))}
+						<div className="td-table-wrap">
+							<table className="td-table">
+								<thead>
+									<tr>
+										{COLUMNS.map(col => {
+											const active = col.key === sortKey;
+											return (
+												<th
+													key={col.key}
+													className={`td-th-sortable${col.numeric ? ' td-th-numeric' : ''}${active ? ' td-th-active' : ''}`}
+													onClick={() => handleSort(col)}
+												>
+													<span className="td-th-inner">
+														{col.label}
+														{active ? (
+															sortDir === 'asc'
+																? <ChevronUp size={14} />
+																: <ChevronDown size={14} />
+														) : (
+															<ChevronsUpDown size={14} className="td-th-icon-idle" />
+														)}
+													</span>
+												</th>
+											);
+										})}
+									</tr>
+								</thead>
+								<tbody>
+									{sortedRoster.map((player, i) => (
+										<tr
+											key={player.PLAYER_ID ?? i}
+											className="td-table-row"
+											onClick={() => navigate(`/players/${player.PLAYER_ID}`)}
+										>
+											{COLUMNS.map(col => (
+												col.key === 'PLAYER' ? (
+													<td key={col.key}>
+														<div className="td-table-player">
+															<div className="td-table-avatar">
+																<PlayerAvatar
+																	playerId={player.PLAYER_ID}
+																	alt={player.PLAYER ?? ''}
+																	fallback={`#${player.NUM || '–'}`}
+																/>
+															</div>
+															<span className="td-table-name">{player.PLAYER}</span>
+														</div>
+													</td>
+												) : (
+													<td key={col.key} className={col.numeric ? 'td-td-numeric' : ''}>
+														{formatCell(player, col.key)}
+													</td>
+												)
+											))}
+										</tr>
+									))}
+								</tbody>
+							</table>
 						</div>
 					)}
 				</div>

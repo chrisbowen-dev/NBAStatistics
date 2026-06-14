@@ -113,6 +113,26 @@ export interface RosterPlayer {
 	HOW_ACQUIRED: string;
 }
 
+/** A roster player merged with their latest-season per-game stats. */
+export interface RosterPlayerStats {
+	PLAYER_ID: number;
+	PLAYER: string | null;
+	POSITION: string | null;
+	NUM: string | null;
+	stats: {
+		GP: number | null;
+		MIN: number | null;
+		PTS: number | null;
+		REB: number | null;
+		AST: number | null;
+		STL: number | null;
+		BLK: number | null;
+		FG_PCT: number | null;
+		FG3_PCT: number | null;
+		FT_PCT: number | null;
+	} | null;
+}
+
 export interface TeamDetail extends Team {
 	details?: TeamBackground;
 	standings?: TeamStandings;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+﻿import { useState, useEffect, useRef, useMemo } from 'react';
 import {
 	Box,
 	Typography,
@@ -17,6 +17,7 @@ interface PlayerRow {
 	id: number;
 	full_name: string;
 	team: string;
+	teams: string[];
 	position: string;
 	jersey: string;
 	mpg: number;
@@ -114,10 +115,27 @@ export default function Players() {
 					const info = (p.info as Record<string, unknown>) ?? {};
 					const careerStats = p.careerStats as Record<string, unknown>[] | undefined;
 					const season = careerStats?.length ? careerStats[careerStats.length - 1] : null;
+
+					const infoTeam = (info['TEAM_ABBREVIATION'] as string) ?? '';
+					const isTOT = infoTeam === 'TOT' || (season && season['TEAM_ABBREVIATION'] === 'TOT');
+					let teamDisplay = infoTeam && infoTeam !== 'TOT' ? infoTeam : '-';
+					let teams: string[] = teamDisplay !== '-' ? [teamDisplay] : [];
+					if (isTOT && careerStats?.length) {
+						const seasonId = (season ?? careerStats[careerStats.length - 1])['SEASON_ID'];
+						const parts = careerStats.filter(
+							r => r['SEASON_ID'] === seasonId && r['TEAM_ABBREVIATION'] !== 'TOT'
+						);
+						if (parts.length > 0) {
+							teams = parts.map(r => r['TEAM_ABBREVIATION'] as string);
+							teamDisplay = teams.join(', ');
+						}
+					}
+
 					return {
 						id: p.id as number,
 						full_name: (p.full_name as string) ?? '',
-						team: (info['TEAM_ABBREVIATION'] as string) ?? '-',
+						team: teamDisplay,
+						teams,
 						position: (info['POSITION'] as string) ?? '-',
 						jersey: (info['JERSEY'] as string) ?? '-',
 						mpg: season ? toNum(season['MIN']) : 0,
@@ -185,7 +203,7 @@ export default function Players() {
 			positions: f.positions.includes(pos) ? f.positions.filter(p => p !== pos) : [...f.positions, pos],
 		}));
 
-	const activeTeams = Array.from(new Set(allRows.map(r => r.team).filter(t => t && t !== '-'))).sort();
+	const activeTeams = Array.from(new Set(allRows.flatMap(r => r.teams))).sort();
 	const allTeams = ['Free Agent', ...activeTeams];
 	const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'] as const;
 	const visibleTeams = allTeams.filter(t => t.toLowerCase().includes(teamSearch.toLowerCase()));
@@ -193,8 +211,9 @@ export default function Players() {
 
 	const filteredRows = allRows.filter(r => {
 		if (filters.teams.length) {
-			const teamMatch = filters.teams.includes(r.team) ||
-				(filters.teams.includes('Free Agent') && (!r.team || r.team === '-'));
+			const isFreeAgent = r.teams.length === 0;
+			const teamMatch = filters.teams.some(t => r.teams.includes(t)) ||
+				(filters.teams.includes('Free Agent') && isFreeAgent);
 			if (!teamMatch) return false;
 		}
 		if (filters.positions.length) {
