@@ -1,26 +1,14 @@
 import express, { Request, Response } from 'express';
-import axios from 'axios';
 import Team from '../models/Team';
 import Player from '../models/Player';
 
 const router = express.Router();
 
-const PYTHON_URL = process.env.PYTHON_API_URL;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
-function isFresh(doc: { lastUpdated?: Date }): boolean {
-  return doc?.lastUpdated !== undefined &&
-    (Date.now() - new Date(doc.lastUpdated).getTime()) < CACHE_TTL_MS;
-}
-
 // Get all teams
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
-    const cached = await Team.find({});
-    if (cached.length === 30) return res.json(cached);
-
-    const { data } = await axios.get(`${PYTHON_URL}/teams`);
-    res.json(data);
+    const teams = await Team.find({});
+    res.json(teams);
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Unknown error';
     res.status(500).json({ error });
@@ -86,17 +74,10 @@ router.get('/:id/players', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params['id'] as string);
-    const cached = await Team.findOne({ id });
+    const team = await Team.findOne({ id });
 
-    if (cached) return res.json(cached);
-
-    const { data } = await axios.get(`${PYTHON_URL}/teams/${String(id)}`);
-    const updated = await Team.findOneAndUpdate(
-      { id },
-      { ...data, id, lastUpdated: new Date() },
-      { upsert: true, new: true }
-    );
-    res.json(updated);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    res.json(team);
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Unknown error';
     res.status(500).json({ error });
