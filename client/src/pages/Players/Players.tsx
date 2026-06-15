@@ -311,41 +311,41 @@ export default function Players() {
 						<div>
 							<label className="pl-filter-label">Teams</label>
 							<div ref={teamDropRef} style={{ position: 'relative' }}>
-							<button
-								onClick={() => setShowTeamDrop(v => !v)}
-								className="pl-dropdown-trigger"
-							>
-								<span className="pl-fg-muted">
-									{filters.teams.length === 0 ? 'Select teams...' : `${filters.teams.length} selected`}
-								</span>
-								<ChevronDown size={14} className="pl-fg-muted" />
-							</button>
-							{showTeamDrop && (
-								<div className="pl-dropdown-menu">
-									<div className="pl-dropdown-search-wrap">
-										<input
-											type="text"
-											placeholder="Search teams..."
-											value={teamSearch}
-											onChange={e => setTeamSearch(e.target.value)}
-											className="pl-dropdown-search"
-										/>
+								<button
+									onClick={() => setShowTeamDrop(v => !v)}
+									className="pl-dropdown-trigger"
+								>
+									<span className="pl-fg-muted">
+										{filters.teams.length === 0 ? 'Select teams...' : `${filters.teams.length} selected`}
+									</span>
+									<ChevronDown size={14} className="pl-fg-muted" />
+								</button>
+								{showTeamDrop && (
+									<div className="pl-dropdown-menu">
+										<div className="pl-dropdown-search-wrap">
+											<input
+												type="text"
+												placeholder="Search teams..."
+												value={teamSearch}
+												onChange={e => setTeamSearch(e.target.value)}
+												className="pl-dropdown-search"
+											/>
+										</div>
+										<div className="pl-dropdown-list">
+											{visibleTeams.map(team => (
+												<label key={team} className="pl-dropdown-item">
+													<Checkbox
+														size="small"
+														checked={filters.teams.includes(team)}
+														onChange={() => toggleTeam(team)}
+														sx={{ p: 0.5 }}
+													/>
+													<span>{team}</span>
+												</label>
+											))}
+										</div>
 									</div>
-									<div className="pl-dropdown-list">
-										{visibleTeams.map(team => (
-											<label key={team} className="pl-dropdown-item">
-												<Checkbox
-													size="small"
-													checked={filters.teams.includes(team)}
-													onChange={() => toggleTeam(team)}
-													sx={{ p: 0.5 }}
-												/>
-												<span>{team}</span>
-											</label>
-										))}
-									</div>
-								</div>
-							)}
+								)}
 							</div>
 						</div>
 
