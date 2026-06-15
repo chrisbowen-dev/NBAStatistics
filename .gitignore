@@ -6,3 +6,6 @@ python-api/venv/
 *.pyc
 __pycache__/
 dist/
+
+# Private/local-only docs — learning notes, scratch, anything not for the public repo
+docs/private/
