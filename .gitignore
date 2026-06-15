@@ -9,3 +9,6 @@ dist/
 
 # Private/local-only docs — learning notes, scratch, anything not for the public repo
 docs/private/
+
+# Personal Claude Code overrides for this project
+.claude/settings.local.json
