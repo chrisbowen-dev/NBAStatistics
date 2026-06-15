@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\" \"npm run dev --prefix python-api\"",
-    "install:all": "npm install && npm install --prefix client && npm install --prefix server"
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
+    "check": "npm run lint --prefix client && npm run build --prefix client && npm run build --prefix server",
+    "build": "npm run build --prefix server && npm run build --prefix client"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
