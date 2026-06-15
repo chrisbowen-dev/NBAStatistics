@@ -87,6 +87,81 @@ rolling back to a known-good one.
 
 ---
 
+## Production Environment Reference
+
+Live URLs and the exact configuration of the deployed services, for quick reference.
+
+### Live URLs
+
+| Resource             | URL                                              |
+|----------------------|--------------------------------------------------|
+| Live site (frontend) | https://nba-statistics-client.onrender.com       |
+| Backend API          | https://nba-statistics-api.onrender.com          |
+| API health check     | https://nba-statistics-api.onrender.com/health   |
+| Source repository    | https://github.com/chrisbowen-dev/NBAStatistics  |
+| Render dashboard     | https://dashboard.render.com                     |
+| MongoDB Atlas        | https://cloud.mongodb.com                        |
+
+All backend routes are mounted under `/api` (e.g. `/api/teams`,
+`/api/players?name=`), and the frontend calls the backend at `<backend-url>/api`.
+
+### Render Services
+
+Two separate Render services deploy from the `main` branch:
+
+| Service                 | Type        | Root dir | Build command                  | Start / publish              |
+|-------------------------|-------------|----------|--------------------------------|------------------------------|
+| `nba-statistics-api`    | Web Service | `server` | `npm install && npm run build` | Start: `node dist/server.js` |
+| `nba-statistics-client` | Static Site | `client` | `npm install && npm run build` | Publish: `dist`              |
+
+A **Web Service** runs a live Node process (the Express API); a **Static Site** just
+serves the compiled React files over a CDN. They communicate over the public internet
+via the URLs above — the frontend's API base URL is injected at build time.
+
+> **Free-tier note:** the Web Service spins down after ~15 minutes of inactivity, so the
+> first request after idle takes ~30 seconds to cold-start. The static site is always
+> instant.
+
+### Required Environment Variables
+
+Set in the Render dashboard per service — never committed to the repository:
+
+| Variable       | Service                 | Purpose                                                              |
+|----------------|-------------------------|---------------------------------------------------------------------|
+| `MONGODB_URI`  | `nba-statistics-api`    | Atlas connection string — **must include the `/nba_stats` database name** |
+| `NODE_ENV`     | `nba-statistics-api`    | `production`                                                         |
+| `VITE_API_URL` | `nba-statistics-client` | Backend API base, e.g. `https://nba-statistics-api.onrender.com/api` |
+
+The client also reads `VITE_API_URL` from `client/.env.production` at build time; keep
+the Render value and that file in sync.
+
+### MongoDB Atlas Network Access
+
+Atlas blocks all connections except from whitelisted IPs. Render's free tier uses
+dynamic outbound IPs that can't be pinned, so Atlas **Network Access** must allow
+`0.0.0.0/0` (access from anywhere). This only opens network reachability — the database
+is still protected by its user credentials and TLS.
+
+### Deployment Gotchas (learned the hard way)
+
+- **Build tooling must be in `dependencies`, not `devDependencies`.** Render sets
+  `NODE_ENV=production`, which makes `npm install` skip `devDependencies`. `typescript`
+  and the `@types/*` packages are needed to compile the server, so they belong in
+  `dependencies` — otherwise the production build fails with missing-type errors.
+- **`MONGODB_URI` must include the database name.** Atlas's default connection string
+  ends in `.../?retryWrites=...` with no database, so Mongoose silently connects to the
+  empty default `test` database. Insert the name before the `?`:
+  `...mongodb.net/nba_stats?retryWrites=...`. Symptom of getting this wrong: the server
+  connects fine but every query returns empty.
+- **Production serves only from MongoDB.** The Python service isn't deployed, so any data
+  not present in Atlas simply won't appear — Express returns an empty result or `404`
+  rather than fetching it. Keep Atlas seeded via the nightly ingest.
+- **Editing an env var restarts the service.** Updating a variable in Render
+  auto-restarts the affected service, which also clears any stale MongoDB connection from
+  before a fix.
+
+---
+
 ## Release Summary
 
 | Question                    | Answer                                          |

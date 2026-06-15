@@ -4,6 +4,10 @@ A portfolio-quality NBA statistics website built on the MERN stack. Users can se
 for players and teams and view detailed statistics sourced from the
 [`nba_api`](https://github.com/swar/nba_api) Python library.
 
+**Live site:** https://nba-statistics-client.onrender.com &nbsp;·&nbsp;
+**API:** https://nba-statistics-api.onrender.com &nbsp;·&nbsp;
+Deployment details in [`WORKFLOW.md`](./WORKFLOW.md#production-environment-reference).
+
 > This is the public overview of the project's architecture and design. It explains
 > **how the system is built and why**, but intentionally omits machine-specific setup
 > instructions and credentials.
@@ -63,7 +67,10 @@ NBAStatistics/
 
 ## Architecture
 
-### Development (all services running locally)
+### Request Path (serving the app)
+
+The browser talks only to Express, and Express reads only from MongoDB. Nothing in the
+live request path calls NBA.com or the Python service.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -74,21 +81,28 @@ NBAStatistics/
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              EXPRESS / NODE.JS  (port 5000)                 │
-│  1. Check MongoDB cache (lastUpdated < 24h?)                │
-│     ├─ HIT  → return data immediately                       │
-│     └─ MISS → call Python API, then cache the result        │
-│  2. Return JSON to React                                     │
+│  Reads from MongoDB and returns JSON. If a record isn't in  │
+│  the database, responds with an empty result or 404 — it    │
+│  never fetches live at request time.                        │
 └───────────────────────────┬─────────────────────────────────┘
-                            │  GET /players?name=LeBron  (server-to-server)
+                            │  read
                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│              FASTAPI / PYTHON  (port 8000)                  │
-│  Wraps nba_api calls, returns clean JSON                    │
-└───────────────────────────┬─────────────────────────────────┘
-                            │  nba_api (residential IP — not blocked)
-                            ▼
-                       NBA.com endpoints
+                      MongoDB Atlas
 ```
+
+### Ingestion Path (populating the data)
+
+Data is loaded separately from the request path. This is the only place `nba_api` is
+used, and it must run from a residential IP (see Production below).
+
+```
+  nightly ingest  ──(nba_api)──▶  NBA.com endpoints
+        │
+        └── upserts players & teams ──▶  MongoDB Atlas
+```
+
+The FastAPI service (`python-api`) wraps `nba_api` for local development and data
+exploration. It is **not** in the live request path and is **not** deployed to the cloud.
 
 ### Production
 
@@ -134,7 +148,7 @@ array, a `stats` object (record, points, rebounds, assists, net rating), and a
 
 ## API Design
 
-### Python FastAPI endpoints (internal — called by Express only)
+### Python FastAPI endpoints (internal data service — not in the live request path)
 
 | Method | Path                      | nba_api source                          |
 |--------|---------------------------|-----------------------------------------|
@@ -152,9 +166,10 @@ array, a `stats` object (record, points, rebounds, assists, net rating), and a
 | GET    | `/api/teams`         | All 30 teams                      |
 | GET    | `/api/teams/:id`     | Full team detail + roster         |
 
-Express sits between React and Python: it checks MongoDB first and only calls the Python
-API on a cache miss (24-hour TTL via `lastUpdated`). The browser never talks to the
-Python service or MongoDB directly.
+Express reads exclusively from MongoDB and never calls the Python service at request
+time; if a record isn't present it returns an empty result or `404`. The FastAPI
+endpoints above exist for the ingestion path and local data exploration. The browser
+never talks to the Python service or MongoDB directly.
 
 ---
 
@@ -209,9 +224,11 @@ deployment model above for why.
 | 2     | Python API Layer                  | ✅ Complete    |
 | 3     | Express Backend                   | ✅ Complete    |
 | 4     | React Frontend                    | ✅ Complete    |
-| 5     | Production Deployment             | ⬜ Not Started |
+| 5     | Production Deployment             | ✅ Complete    |
 | 6     | Documentation                     | 🚧 In Progress |
 
-The core application is feature-complete: player search, player detail pages, the teams
-grid, team detail pages with rosters, and MongoDB caching all work end to end. Remaining
-work is production deployment and documentation.
+The application is feature-complete and **deployed live** on Render: player search,
+player detail pages, the teams grid, team detail pages with rosters, and MongoDB-backed
+reads all work end to end in production. Express now reads exclusively from MongoDB Atlas
+(no Python fallback in the request path). Remaining work is documentation polish and
+scheduling the nightly ingest so the data refreshes automatically.
