@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import dns from 'dns';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -6,6 +7,11 @@ import playerRoutes from './routes/players';
 import teamRoutes from './routes/teams';
 
 dotenv.config();
+
+// Comcast's IPv6 DNS refuses TCP SRV queries from Node.js; use Google DNS in dev only
+if (process.env.NODE_ENV !== 'production') {
+	dns.setServers(['8.8.8.8', '8.8.4.4']);
+}
 
 const app = express();
 app.use(cors());
