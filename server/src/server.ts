@@ -14,12 +14,17 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const app = express();
+app.disable('etag');
 app.use(cors());
 app.use(express.json());
 
 mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB error:', err));
+
+mongoose.connection.on('disconnected', () => console.log('MongoDB disconnected'));
+mongoose.connection.on('reconnected', () => console.log('MongoDB reconnected'));
+mongoose.connection.on('error', err => console.error('MongoDB connection error:', err));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
