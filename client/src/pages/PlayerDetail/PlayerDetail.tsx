@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, Activity, Users, Shield, Hand, Clock, Target, Crosshair, CheckCircle } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+	ArrowLeft,
+	ArrowUpFromLine,
+	Share2,
+	Zap,
+	ShieldBan,
+	Timer,
+	Crosshair,
+	Target,
+	Medal,
+	Icon,
+} from 'lucide-react';
+import { basketball } from '@lucide/lab';
 import { api } from '../../api/client';
 import { Player } from '../../types/player';
 import { getTeamColors } from '../../utils/teamColors';
@@ -103,13 +115,14 @@ export default function PlayerDetail() {
 			: 'Undrafted';
 
 	return (
-		<div className="pd-page">
-			<div
-				className="pd-header"
-				style={{
-					background: `linear-gradient(to bottom, color-mix(in srgb, ${colors.primary} 15%, transparent), transparent)`,
-				}}
-			>
+		<div
+			className="pd-page"
+			style={{
+				'--team-primary': colors.primary,
+				'--team-secondary': colors.secondary,
+			} as React.CSSProperties}
+		>
+			<div className="pd-header">
 				<div className="pd-container">
 					<button className="pd-back-btn" onClick={() => navigate(-1)}>
 						<ArrowLeft size={16} />
@@ -135,7 +148,11 @@ export default function PlayerDetail() {
 							</h1>
 							<div className="pd-meta">
 								<div className="pd-meta-row">
-									{info.TEAM_NAME && <span className="pd-meta-item">{info.TEAM_NAME}</span>}
+									{info.TEAM_NAME && info.TEAM_ID && (
+										<Link to={`/teams/${info.TEAM_ID}`} className="pd-meta-team-link">
+											{info.TEAM_NAME}
+										</Link>
+									)}
 									{info.TEAM_NAME && info.POSITION && <span className="pd-meta-dot">•</span>}
 									{info.POSITION && <span className="pd-meta-item">{info.POSITION}</span>}
 									{info.JERSEY && <span className="pd-meta-dot">•</span>}
@@ -149,16 +166,14 @@ export default function PlayerDetail() {
 
 			<div className="pd-container">
 				<div className="pd-stats-grid">
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
-					>
+					{/* PPG — primary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-primary) 18%, transparent)' }}
 							>
-								<TrendingUp size={20} style={{ color: colors.primary }} />
+								<Icon iconNode={basketball} size={15} style={{ color: 'color-mix(in srgb, var(--team-primary) 90%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Points Per Game</h3>
 						</div>
@@ -166,16 +181,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Average points scored</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
-					>
+					{/* RPG — secondary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.secondary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-secondary) 15%, transparent)' }}
 							>
-								<Activity size={20} style={{ color: colors.secondary }} />
+								<ArrowUpFromLine size={15} style={{ color: 'color-mix(in srgb, var(--team-secondary) 85%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Rebounds Per Game</h3>
 						</div>
@@ -183,16 +196,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Average rebounds</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
-					>
+					{/* APG — primary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-primary) 18%, transparent)' }}
 							>
-								<Users size={20} style={{ color: colors.primary }} />
+								<Share2 size={15} style={{ color: 'color-mix(in srgb, var(--team-primary) 90%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Assists Per Game</h3>
 						</div>
@@ -200,16 +211,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Average assists</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
-					>
+					{/* SPG — secondary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.secondary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-secondary) 15%, transparent)' }}
 							>
-								<Shield size={20} style={{ color: colors.secondary }} />
+								<Zap size={15} style={{ color: 'color-mix(in srgb, var(--team-secondary) 85%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Steals Per Game</h3>
 						</div>
@@ -217,16 +226,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Average steals</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
-					>
+					{/* BPG — primary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-primary) 18%, transparent)' }}
 							>
-								<Hand size={20} style={{ color: colors.primary }} />
+								<ShieldBan size={15} style={{ color: 'color-mix(in srgb, var(--team-primary) 90%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Blocks Per Game</h3>
 						</div>
@@ -234,16 +241,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Average blocks</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
-					>
+					{/* MPG — secondary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.secondary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-secondary) 15%, transparent)' }}
 							>
-								<Clock size={20} style={{ color: colors.secondary }} />
+								<Timer size={15} style={{ color: 'color-mix(in srgb, var(--team-secondary) 85%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Minutes Per Game</h3>
 						</div>
@@ -251,16 +256,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Average minutes played</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
-					>
+					{/* FG% — primary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-primary) 18%, transparent)' }}
 							>
-								<Target size={20} style={{ color: colors.primary }} />
+								<Crosshair size={15} style={{ color: 'color-mix(in srgb, var(--team-primary) 90%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Field Goal %</h3>
 						</div>
@@ -268,16 +271,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Field goal percentage</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
-					>
+					{/* 3P% — secondary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.secondary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-secondary) 15%, transparent)' }}
 							>
-								<Crosshair size={20} style={{ color: colors.secondary }} />
+								<Target size={15} style={{ color: 'color-mix(in srgb, var(--team-secondary) 85%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">3-Point %</h3>
 						</div>
@@ -285,16 +286,14 @@ export default function PlayerDetail() {
 						<p className="pd-stat-sublabel">Three point percentage</p>
 					</div>
 
-					<div
-						className="pd-stat-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
-					>
+					{/* FT% — primary */}
+					<div className="pd-stat-card">
 						<div className="pd-stat-header">
 							<div
 								className="pd-stat-icon"
-								style={{ backgroundColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)` }}
+								style={{ backgroundColor: 'color-mix(in srgb, var(--team-primary) 18%, transparent)' }}
 							>
-								<CheckCircle size={20} style={{ color: colors.primary }} />
+								<Medal size={15} style={{ color: 'color-mix(in srgb, var(--team-primary) 90%, #fff)' }} />
 							</div>
 							<h3 className="pd-stat-label">Free Throw %</h3>
 						</div>
@@ -304,10 +303,7 @@ export default function PlayerDetail() {
 				</div>
 
 				<div className="pd-info-grid">
-					<div
-						className="pd-info-card"
-						style={{ borderColor: `color-mix(in srgb, ${colors.secondary} 30%, transparent)` }}
-					>
+					<div className="pd-info-card">
 						<h3 className="pd-info-title">Player Information</h3>
 						<div className="pd-info-rows">
 							<div className="pd-info-row">
@@ -347,25 +343,19 @@ export default function PlayerDetail() {
 						</div>
 					</div>
 
-					<div
-						className="pd-info-card pd-info-card--team"
-						style={{
-							borderColor: `color-mix(in srgb, ${colors.primary} 20%, transparent)`,
-							background: `linear-gradient(135deg, color-mix(in srgb, ${colors.primary} 5%, transparent), color-mix(in srgb, ${colors.secondary} 5%, transparent))`,
-						}}
-					>
+					<div className="pd-info-card pd-info-card--team">
 						<h3 className="pd-info-title">Team Information</h3>
 						<div className="pd-info-rows">
 							{info.TEAM_NAME && (
 								<div className="pd-info-row">
 									<span className="pd-info-key">Team</span>
-									<span className="pd-info-val">{info.TEAM_NAME}</span>
+									<Link to={`/teams/${info.TEAM_ID}`} className="pd-info-team-link">{info.TEAM_NAME}</Link>
 								</div>
 							)}
 							{info.TEAM_ABBREVIATION && (
 								<div className="pd-info-row">
 									<span className="pd-info-key">Abbreviation</span>
-									<span className="pd-info-val">{info.TEAM_ABBREVIATION}</span>
+									<Link to={`/teams/${info.TEAM_ID}`} className="pd-info-team-link">{info.TEAM_ABBREVIATION}</Link>
 								</div>
 							)}
 							{info.POSITION && (
@@ -396,10 +386,7 @@ export default function PlayerDetail() {
 					</div>
 				</div>
 
-				<div
-					className="pd-career-card"
-					style={{ borderColor: `color-mix(in srgb, ${colors.primary} 30%, transparent)` }}
-				>
+				<div className="pd-career-card">
 					<h3 className="pd-career-title">Career Stats</h3>
 					{careerRows.length === 0 ? (
 						<div className="pd-empty">No career stats available.</div>
@@ -424,9 +411,17 @@ export default function PlayerDetail() {
 								</thead>
 								<tbody>
 									{careerRows.map((s, i) => (
-										<tr key={i}>
+										<tr key={i} className={i === 0 ? 'pd-table-row-current' : ''}>
 											<td>{s.SEASON_ID}</td>
-											<td>{s.TEAM_ABBREVIATION}</td>
+											<td>
+												{s.TEAM_ID ? (
+													<Link to={`/teams/${s.TEAM_ID}`} className="pd-table-team-link">
+														{s.TEAM_ABBREVIATION}
+													</Link>
+												) : (
+													s.TEAM_ABBREVIATION || '—'
+												)}
+											</td>
 											<td>{s.GP ?? '—'}</td>
 											<td>{fmtStat(s.MIN)}</td>
 											<td>{fmtStat(s.PTS)}</td>

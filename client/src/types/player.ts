@@ -25,6 +25,7 @@ export interface PlayerInfo {
 
 export interface CareerStatSeason {
 	SEASON_ID: string;
+	TEAM_ID: number;
 	TEAM_ABBREVIATION: string;
 	GP: number;
 	MIN: number;

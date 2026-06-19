@@ -42,7 +42,32 @@
 
 /* ── Header band ── */
 .pd-header {
-	border-bottom: 1px solid var(--color-border);
+	position: relative;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	overflow: hidden;
+}
+
+/* Primary color bleeds in from top-left */
+.pd-header::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(135deg, color-mix(in srgb, var(--team-primary) 14%, transparent) 0%, transparent 60%);
+	pointer-events: none;
+}
+
+/* Secondary color as a fading top border line */
+.pd-header::after {
+	content: '';
+	position: absolute;
+	top: 0; left: 0; right: 0;
+	height: 2px;
+	background: linear-gradient(
+		90deg,
+		color-mix(in srgb, var(--team-secondary) 65%, transparent) 0%,
+		color-mix(in srgb, var(--team-secondary) 8%, transparent) 60%,
+		transparent 100%
+	);
 }
 
 /* ── Back button ── */
@@ -77,7 +102,8 @@
 .pd-avatar {
 	width: 8rem;
 	height: 8rem;
-	background-color: var(--color-surface-raised);
+	background-color: color-mix(in srgb, var(--team-primary) 20%, transparent);
+	border: 1px solid color-mix(in srgb, var(--team-secondary) 25%, transparent);
 	border-radius: 1rem;
 	display: flex;
 	align-items: center;
@@ -124,6 +150,19 @@
 	opacity: 0.5;
 }
 
+.pd-meta-team-link {
+	color: color-mix(in srgb, var(--team-primary) 85%, #fff);
+	font-weight: 600;
+	text-decoration: none;
+	border-bottom: 1px solid color-mix(in srgb, var(--team-primary) 30%, transparent);
+	transition: color 0.15s, border-color 0.15s;
+}
+
+.pd-meta-team-link:hover {
+	color: color-mix(in srgb, var(--team-primary) 100%, #fff);
+	border-bottom-color: color-mix(in srgb, var(--team-primary) 60%, transparent);
+}
+
 /* ── Stats grid ── */
 .pd-stats-grid {
 	display: grid;
@@ -140,10 +179,25 @@
 
 /* ── Stat card ── */
 .pd-stat-card {
-	background-color: var(--color-surface-raised);
-	border: 1px solid var(--color-border);
-	border-radius: 0.5rem;
-	padding: 1.5rem;
+	position: relative;
+	background: rgba(4, 12, 20, 0.78);
+	border: 1px solid color-mix(in srgb, var(--team-secondary) 32%, transparent);
+	border-radius: 10px;
+	padding: 1rem 1.1rem;
+	overflow: hidden;
+}
+
+.pd-stat-card::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 10px;
+	background: linear-gradient(
+		150deg,
+		color-mix(in srgb, var(--team-primary) 6%, transparent) 0%,
+		transparent 55%
+	);
+	pointer-events: none;
 }
 
 .pd-stat-header {
@@ -154,9 +208,9 @@
 }
 
 .pd-stat-icon {
-	width: 2.5rem;
-	height: 2.5rem;
-	border-radius: 0.5rem;
+	width: 28px;
+	height: 28px;
+	border-radius: 6px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -199,10 +253,25 @@
 
 /* ── Info card ── */
 .pd-info-card {
-	background-color: var(--color-surface-raised);
-	border: 1px solid var(--color-border);
-	border-radius: 0.5rem;
-	padding: 1.5rem;
+	position: relative;
+	background: rgba(4, 12, 20, 0.78);
+	border: 1px solid color-mix(in srgb, var(--team-secondary) 32%, transparent);
+	border-radius: 10px;
+	padding: 1.25rem 1.5rem;
+	overflow: hidden;
+}
+
+.pd-info-card::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 10px;
+	background: linear-gradient(
+		150deg,
+		color-mix(in srgb, var(--team-primary) 5%, transparent) 0%,
+		transparent 55%
+	);
+	pointer-events: none;
 }
 
 .pd-info-title {
@@ -223,6 +292,11 @@
 	justify-content: space-between;
 	align-items: baseline;
 	gap: 1rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--team-secondary) 10%, transparent);
+}
+
+.pd-info-row:last-child {
+	border-bottom: none;
 }
 
 .pd-info-key {
@@ -238,19 +312,53 @@
 	text-align: right;
 }
 
+.pd-info-team-link {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: color-mix(in srgb, var(--team-primary) 85%, #fff);
+	text-decoration: none;
+	border-bottom: 1px solid color-mix(in srgb, var(--team-primary) 28%, transparent);
+	transition: color 0.15s, border-color 0.15s;
+}
+
+.pd-info-team-link:hover {
+	color: color-mix(in srgb, var(--team-primary) 100%, #fff);
+	border-bottom-color: color-mix(in srgb, var(--team-primary) 55%, transparent);
+}
+
 /* ── Career stats card ── */
 .pd-career-card {
-	background-color: var(--color-surface-raised);
-	border: 1px solid var(--color-border);
-	border-radius: 0.5rem;
-	padding: 1.5rem;
+	position: relative;
+	background: rgba(4, 12, 20, 0.78);
+	border: 1px solid color-mix(in srgb, var(--team-secondary) 32%, transparent);
+	border-radius: 10px;
+	padding: 1.25rem 1.5rem;
+	overflow: hidden;
+}
+
+.pd-career-card::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 10px;
+	background: linear-gradient(
+		150deg,
+		color-mix(in srgb, var(--team-primary) 5%, transparent) 0%,
+		transparent 50%
+	);
+	pointer-events: none;
+	z-index: 0;
 }
 
 .pd-career-title {
-	font-size: 0.9375rem;
-	font-weight: 600;
-	color: var(--color-fg);
-	margin: 0 0 1rem;
+	position: relative;
+	z-index: 1;
+	font-size: 13px;
+	font-weight: 700;
+	color: rgba(255, 255, 255, 0.82);
+	margin: 0 0 0 0;
+	padding-bottom: 0.75rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--team-secondary) 18%, transparent);
 }
 
 /* ── Career table ── */
@@ -267,35 +375,68 @@
 }
 
 .pd-table thead tr {
-	border-bottom: 1px solid var(--color-border);
+	border-bottom: 1px solid color-mix(in srgb, var(--team-secondary) 18%, transparent);
 }
 
 .pd-table th {
-	padding: 0.5rem 0.75rem;
+	padding: 0.55rem 0.75rem;
 	text-align: left;
-	font-size: 0.75rem;
-	font-weight: 600;
-	color: var(--color-fg-muted);
+	font-size: 10px;
+	font-weight: 700;
+	color: rgba(255, 255, 255, 0.25);
+	letter-spacing: 0.07em;
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
-.pd-table td {
-	padding: 0.625rem 0.75rem;
-	color: var(--color-fg);
+	white-space: nowrap;
+	position: relative;
+	z-index: 1;
 }
 
 .pd-table tbody tr {
-	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-	transition: background-color 0.15s;
-}
-
-.pd-table tbody tr:hover {
-	background-color: rgba(255, 255, 255, 0.04);
+	border-bottom: 1px solid color-mix(in srgb, var(--team-secondary) 9%, transparent);
+	transition: background 0.12s;
+	position: relative;
+	z-index: 1;
 }
 
 .pd-table tbody tr:last-child {
 	border-bottom: none;
+}
+
+.pd-table tbody tr:hover {
+	background: color-mix(in srgb, var(--team-secondary) 3%, transparent);
+}
+
+.pd-table td {
+	padding: 0.65rem 0.75rem;
+	color: rgba(255, 255, 255, 0.62);
+	white-space: nowrap;
+}
+
+.pd-table-row-current td {
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.pd-table tbody td:first-child {
+	color: rgba(255, 255, 255, 0.35);
+	font-weight: 500;
+}
+
+.pd-table-row-current td:first-child {
+	color: rgba(255, 255, 255, 0.45);
+}
+
+.pd-table-team-link {
+	color: color-mix(in srgb, var(--team-primary) 85%, #fff);
+	font-weight: 600;
+	font-size: 11px;
+	text-decoration: none;
+	border-bottom: 1px solid color-mix(in srgb, var(--team-primary) 25%, transparent);
+	transition: color 0.15s, border-color 0.15s;
+}
+
+.pd-table-team-link:hover {
+	color: color-mix(in srgb, var(--team-primary) 100%, #fff);
+	border-bottom-color: color-mix(in srgb, var(--team-primary) 55%, transparent);
 }
 
 /* ── Empty state ── */
