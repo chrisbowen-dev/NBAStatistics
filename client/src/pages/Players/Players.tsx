@@ -1,22 +1,16 @@
-﻿import { useState, useEffect, useRef, useMemo } from 'react';
-import {
-	Box,
-	Typography,
-	CircularProgress,
-	Collapse,
-	Slider,
-	Checkbox,
-	FormControlLabel,
-} from '@mui/material';
-import { Search, Filter, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Slider } from '@mui/material';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
+import TeamsDropdown from '../../components/TeamsDropdown/TeamsDropdown';
 import './Players.css';
 
 interface PlayerRow {
 	id: number;
 	full_name: string;
 	team: string;
+	teamId: number;
 	teams: string[];
 	position: string;
 	jersey: string;
@@ -84,10 +78,44 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 	{ key: 'ftPct', label: 'FT%' },
 ];
 
+const PAGE_SIZE = 25;
+
+const TEAM_ID_MAP: Record<string, number> = {
+	ATL: 1610612737,
+	BOS: 1610612738,
+	BKN: 1610612751,
+	CHA: 1610612766,
+	CHI: 1610612741,
+	CLE: 1610612739,
+	DAL: 1610612742,
+	DEN: 1610612743,
+	DET: 1610612765,
+	GSW: 1610612744,
+	HOU: 1610612745,
+	IND: 1610612754,
+	LAC: 1610612746,
+	LAL: 1610612747,
+	MEM: 1610612763,
+	MIA: 1610612748,
+	MIL: 1610612749,
+	MIN: 1610612750,
+	NOP: 1610612740,
+	NYK: 1610612752,
+	OKC: 1610612760,
+	ORL: 1610612753,
+	PHI: 1610612755,
+	PHX: 1610612756,
+	POR: 1610612757,
+	SAC: 1610612758,
+	SAS: 1610612759,
+	TOR: 1610612761,
+	UTA: 1610612762,
+	WAS: 1610612764,
+};
+
 function toNum(v: unknown): number {
 	return typeof v === 'number' ? v : parseFloat(String(v ?? 0)) || 0;
 }
-
 
 export default function Players() {
 	const [search, setSearch] = useState('');
@@ -96,13 +124,9 @@ export default function Players() {
 	const [error, setError] = useState('');
 	const [sortKey, setSortKey] = useState<SortKey>('ppg');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-	const [page, setPage] = useState(0);
-	const [rowsPerPage, setRowsPerPage] = useState(25);
+	const [visibleCount, setVisibleCount] = useState(25);
 	const [showFilters, setShowFilters] = useState(false);
 	const [filters, setFilters] = useState<Filters>(() => buildFilters(FALLBACK_MAXES));
-	const [showTeamDrop, setShowTeamDrop] = useState(false);
-	const [teamSearch, setTeamSearch] = useState('');
-	const teamDropRef = useRef<HTMLDivElement>(null);
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -135,6 +159,7 @@ export default function Players() {
 						id: p.id as number,
 						full_name: (p.full_name as string) ?? '',
 						team: teamDisplay,
+						teamId: (info['TEAM_ID'] as number) ?? 0,
 						teams,
 						position: (info['POSITION'] as string) ?? '-',
 						jersey: (info['JERSEY'] as string) ?? '-',
@@ -178,18 +203,11 @@ export default function Players() {
 
 	useEffect(() => {
 		setFilters(buildFilters(statMaxes));
-		setPage(0);
 	}, [statMaxes]);
 
 	useEffect(() => {
-		const handler = (e: MouseEvent) => {
-			if (teamDropRef.current && !teamDropRef.current.contains(e.target as Node)) {
-				setShowTeamDrop(false);
-			}
-		};
-		document.addEventListener('mousedown', handler);
-		return () => document.removeEventListener('mousedown', handler);
-	}, []);
+		setVisibleCount(25);
+	}, [search, filters, sortKey, sortOrder]);
 
 	const toggleTeam = (team: string) =>
 		setFilters(f => ({
@@ -204,9 +222,8 @@ export default function Players() {
 		}));
 
 	const activeTeams = Array.from(new Set(allRows.flatMap(r => r.teams))).sort();
-	const allTeams = ['Free Agent', ...activeTeams];
+	const allTeams = [...activeTeams];
 	const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'] as const;
-	const visibleTeams = allTeams.filter(t => t.toLowerCase().includes(teamSearch.toLowerCase()));
 	const activeFilterCount = filters.teams.length + filters.positions.length;
 
 	const filteredRows = allRows.filter(r => {
@@ -245,7 +262,6 @@ export default function Players() {
 			setSortKey(key);
 			setSortOrder('asc');
 		}
-		setPage(0);
 	};
 
 	const sortedRows = [...filteredRows].sort((a, b) => {
@@ -257,26 +273,17 @@ export default function Players() {
 		return 0;
 	});
 
-	const pageCount = Math.ceil(filteredRows.length / rowsPerPage);
-	const paginatedRows = sortedRows.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
-
-	const SortIcon = ({ col }: { col: SortKey }) => {
-		if (sortKey !== col) return <ChevronsUpDown size={14} className="pl-sort-icon-inactive" />;
-		return sortOrder === 'asc'
-			? <ChevronUp size={14} className="pl-sort-icon" />
-			: <ChevronDown size={14} className="pl-sort-icon" />;
-	};
+	const visibleRows = sortedRows.slice(0, visibleCount);
+	const hasMore = visibleCount < sortedRows.length;
 
 	return (
 		<div className="pl-page">
-			<div className="pl-header">
-				<Typography variant="h4" sx={{ fontWeight: 'bold' }} gutterBottom>Players</Typography>
-				<Typography variant="body2" color="text.secondary">Browse and search NBA players</Typography>
-			</div>
+			<h1 className="pl-page-title">Players</h1>
+			<p className="pl-page-sub">Browse and search NBA players</p>
 
 			<div className="pl-toolbar">
 				<div className="pl-search-wrap">
-					<Search size={18} className="pl-search-icon" />
+					<Search size={15} className="pl-search-icon" />
 					<input
 						type="text"
 						placeholder="Search players by name, team, or position..."
@@ -287,236 +294,225 @@ export default function Players() {
 				</div>
 				<button
 					onClick={() => setShowFilters(v => !v)}
-					className={`pl-filter-btn${showFilters ? ' pl-filter-btn-active' : ''}`}
+					className={`pl-filter-btn${showFilters ? ' pl-filter-btn--open' : ''}`}
 				>
-					<Filter size={18} />
-					<span>Filters</span>
+					<SlidersHorizontal size={15} />
+					Filters
 					{activeFilterCount > 0 && (
 						<span className="pl-filter-badge">{activeFilterCount}</span>
 					)}
 				</button>
 			</div>
 
-			{error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
+			{error && <p className="pl-error">{error}</p>}
 
-			<Collapse in={showFilters}>
-				<div className="pl-filter-panel">
-					<div className="pl-filter-panel-header">
-						<Typography sx={{ fontWeight: 600, fontSize: 14 }}>Filters</Typography>
-						<button className="pl-clear-btn" onClick={() => setFilters(buildFilters(statMaxes))}>
-							Clear all
-						</button>
-					</div>
-					<div className="pl-filter-grid">
-						<div>
-							<label className="pl-filter-label">Teams</label>
-							<div ref={teamDropRef} style={{ position: 'relative' }}>
-								<button
-									onClick={() => setShowTeamDrop(v => !v)}
-									className="pl-dropdown-trigger"
-								>
-									<span className="pl-fg-muted">
-										{filters.teams.length === 0 ? 'Select teams...' : `${filters.teams.length} selected`}
-									</span>
-									<ChevronDown size={14} className="pl-fg-muted" />
-								</button>
-								{showTeamDrop && (
-									<div className="pl-dropdown-menu">
-										<div className="pl-dropdown-search-wrap">
-											<input
-												type="text"
-												placeholder="Search teams..."
-												value={teamSearch}
-												onChange={e => setTeamSearch(e.target.value)}
-												className="pl-dropdown-search"
-											/>
-										</div>
-										<div className="pl-dropdown-list">
-											{visibleTeams.map(team => (
-												<label key={team} className="pl-dropdown-item">
-													<Checkbox
-														size="small"
-														checked={filters.teams.includes(team)}
-														onChange={() => toggleTeam(team)}
-														sx={{ p: 0.5 }}
-													/>
-													<span>{team}</span>
-												</label>
-											))}
-										</div>
-									</div>
-								)}
-							</div>
+			<div className={`pl-layout ${showFilters ? 'pl-layout--sidebar-open' : 'pl-layout--sidebar-closed'}`}>
+				<div className="pl-sidebar-wrap">
+					<div className="pl-sidebar">
+						<div className="pl-sidebar-header">
+							<span className="pl-sidebar-title">Filters</span>
+							<button className="pl-clear-btn" onClick={() => setFilters(buildFilters(statMaxes))}>
+								Clear all
+							</button>
 						</div>
 
-						<div>
-							<label className="pl-filter-label">Positions</label>
-							<div className="pl-positions-list">
+						<div className="pl-sidebar-section">
+							<div className="pl-filter-label">Teams</div>
+							<TeamsDropdown
+								teams={allTeams}
+								teamIdMap={TEAM_ID_MAP}
+								selected={filters.teams}
+								onToggle={toggleTeam}
+							/>
+						</div>
+
+						<div className="pl-sidebar-divider" />
+
+						<div className="pl-sidebar-section">
+							<div className="pl-filter-label">Position</div>
+							<div className="pl-pill-group">
 								{POSITIONS.map(pos => (
-									<FormControlLabel
+									<button
 										key={pos}
-										control={
-											<Checkbox
-												size="small"
-												checked={filters.positions.includes(pos)}
-												onChange={() => togglePosition(pos)}
-												sx={{ p: 0.5 }}
-											/>
-										}
-										label={<span className="pl-filter-label-text">{pos}</span>}
-										sx={{ m: 0 }}
-									/>
+										className={`pl-pill${filters.positions.includes(pos) ? ' pl-pill--active' : ''}`}
+										onClick={() => togglePosition(pos)}
+									>
+										{pos}
+									</button>
 								))}
 							</div>
 						</div>
 
-						<div className="pl-sliders">
-							{([
-								{ k: 'mpg', label: 'MPG', max: statMaxes.mpg, step: 0.5 },
-								{ k: 'ppg', label: 'PPG', max: statMaxes.ppg, step: 0.5 },
-								{ k: 'rpg', label: 'RPG', max: statMaxes.rpg, step: 0.1 },
-								{ k: 'apg', label: 'APG', max: statMaxes.apg, step: 0.1 },
-							] as const).map(({ k, label, max, step }) => (
-								<div key={k}>
-									<label className="pl-filter-label">
-										{label}: {filters[k][0]} – {filters[k][1]}
-									</label>
+						<div className="pl-sidebar-divider" />
+
+						<div className="pl-sidebar-section">
+							<div className="pl-filter-label">Scoring</div>
+							{(['ppg', 'apg', 'rpg'] as const).map(k => (
+								<div key={k} className="pl-slider-wrap">
+									<div className="pl-slider-label">
+										<span>{k.toUpperCase()}</span>
+										<span>{filters[k][0]} – {filters[k][1]}</span>
+									</div>
 									<Slider
 										size="small"
 										value={filters[k]}
 										onChange={(_, v) => setFilters(f => ({ ...f, [k]: v as [number, number] }))}
 										min={0}
-										max={max}
-										step={step}
+										max={statMaxes[k]}
+										step={0.5}
 										disableSwap
-										sx={{ color: '#f5f5f7' }}
+										sx={{
+											color: 'rgba(255,255,255,0.5)',
+											'& .MuiSlider-thumb': { width: 11, height: 11, backgroundColor: '#fff' },
+											'& .MuiSlider-track': { backgroundColor: 'rgba(255,255,255,0.35)', border: 'none' },
+											'& .MuiSlider-rail': { backgroundColor: 'rgba(255,255,255,0.1)' },
+										}}
 									/>
 								</div>
 							))}
 						</div>
 
-						<div className="pl-sliders">
-							{([
-								{ k: 'spg', label: 'SPG', max: statMaxes.spg, step: 0.1 },
-								{ k: 'bpg', label: 'BPG', max: statMaxes.bpg, step: 0.1 },
-								{ k: 'fgPct', label: 'FG%', max: 100, step: 1 },
-								{ k: 'fg3Pct', label: '3P%', max: 100, step: 1 },
-								{ k: 'ftPct', label: 'FT%', max: 100, step: 1 },
-							] as const).map(({ k, label, max, step }) => (
-								<div key={k}>
-									<label className="pl-filter-label">
-										{label}: {filters[k][0]} – {filters[k][1]}
-									</label>
+						<div className="pl-sidebar-divider" />
+
+						<div className="pl-sidebar-section">
+							<div className="pl-filter-label">Defense</div>
+							{(['spg', 'bpg', 'mpg'] as const).map(k => (
+								<div key={k} className="pl-slider-wrap">
+									<div className="pl-slider-label">
+										<span>{k.toUpperCase()}</span>
+										<span>{filters[k][0]} – {filters[k][1]}</span>
+									</div>
 									<Slider
 										size="small"
 										value={filters[k]}
 										onChange={(_, v) => setFilters(f => ({ ...f, [k]: v as [number, number] }))}
 										min={0}
-										max={max}
-										step={step}
+										max={statMaxes[k]}
+										step={0.1}
 										disableSwap
-										sx={{ color: '#f5f5f7' }}
+										sx={{
+											color: 'rgba(255,255,255,0.5)',
+											'& .MuiSlider-thumb': { width: 11, height: 11, backgroundColor: '#fff' },
+											'& .MuiSlider-track': { backgroundColor: 'rgba(255,255,255,0.35)', border: 'none' },
+											'& .MuiSlider-rail': { backgroundColor: 'rgba(255,255,255,0.1)' },
+										}}
+									/>
+								</div>
+							))}
+						</div>
+
+						<div className="pl-sidebar-divider" />
+
+						<div className="pl-sidebar-section">
+							<div className="pl-filter-label">Shooting %</div>
+							{(['fgPct', 'fg3Pct', 'ftPct'] as const).map(k => (
+								<div key={k} className="pl-slider-wrap">
+									<div className="pl-slider-label">
+										<span>{{ fgPct: 'FG%', fg3Pct: '3P%', ftPct: 'FT%' }[k]}</span>
+										<span>{filters[k][0]} – {filters[k][1]}</span>
+									</div>
+									<Slider
+										size="small"
+										value={filters[k]}
+										onChange={(_, v) => setFilters(f => ({ ...f, [k]: v as [number, number] }))}
+										min={0}
+										max={100}
+										step={1}
+										disableSwap
+										sx={{
+											color: 'rgba(255,255,255,0.5)',
+											'& .MuiSlider-thumb': { width: 11, height: 11, backgroundColor: '#fff' },
+											'& .MuiSlider-track': { backgroundColor: 'rgba(255,255,255,0.35)', border: 'none' },
+											'& .MuiSlider-rail': { backgroundColor: 'rgba(255,255,255,0.1)' },
+										}}
 									/>
 								</div>
 							))}
 						</div>
 					</div>
 				</div>
-			</Collapse>
 
-			{loading ? (
-				<Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
-					<CircularProgress />
-				</Box>
-			) : (
-				<>
-					<div className="pl-table-card">
-						<div className="pl-table-scroll">
-							<table className="pl-table">
-								<thead>
-									<tr>
-										{COLUMNS.map(col => (
-											<th key={col.key} className="pl-th">
-												<button
-													onClick={() => handleSort(col.key)}
-													className="pl-sort-btn"
-												>
-													{col.label}
-													<SortIcon col={col.key} />
-												</button>
-											</th>
-										))}
-									</tr>
-								</thead>
-								<tbody>
-									{paginatedRows.map(row => (
-										<tr
-											key={row.id}
-											onClick={() => navigate(`/players/${row.id}`)}
-											className="pl-row"
-										>
-											<td className="pl-td pl-td-name">{row.full_name}</td>
-											<td className="pl-td pl-td-muted">{row.team}</td>
-											<td className="pl-td pl-td-muted">{row.position}</td>
-											<td className="pl-td">{row.hasStats ? row.mpg : '-'}</td>
-											<td className="pl-td">{row.hasStats ? row.ppg : '-'}</td>
-											<td className="pl-td">{row.hasStats ? row.rpg : '-'}</td>
-											<td className="pl-td">{row.hasStats ? row.apg : '-'}</td>
-											<td className="pl-td">{row.hasStats ? row.spg : '-'}</td>
-											<td className="pl-td">{row.hasStats ? row.bpg : '-'}</td>
-											<td className="pl-td">{row.hasStats ? `${row.fgPct}%` : '-'}</td>
-											<td className="pl-td">{row.hasStats ? `${row.fg3Pct}%` : '-'}</td>
-											<td className="pl-td">{row.hasStats ? `${row.ftPct}%` : '-'}</td>
-										</tr>
-									))}
-									{sortedRows.length === 0 && (
+				<div className="pl-main">
+					{loading ? (
+						<div className="pl-loading">
+							<div className="pl-spinner" />
+						</div>
+					) : (
+						<div className="pl-table-card">
+							<div className="pl-table-scroll">
+								<table className="pl-table">
+									<thead>
 										<tr>
-											<td colSpan={COLUMNS.length} className="pl-empty">
-												No players found matching your search and filters.
-											</td>
+											{COLUMNS.map(col => (
+												<th
+													key={col.key}
+													className={`pl-th${sortKey === col.key ? ' pl-th--sorted' : ''}`}
+													onClick={() => handleSort(col.key)}
+												>
+													<div className="pl-th-inner">
+														<span className="pl-th-label">{col.label}</span>
+														{sortKey === col.key && (
+															<span className="pl-sort-arrow">
+																{sortOrder === 'desc' ? '▼' : '▲'}
+															</span>
+														)}
+													</div>
+												</th>
+											))}
 										</tr>
-									)}
-								</tbody>
-							</table>
+									</thead>
+									<tbody>
+										{visibleRows.map(row => (
+											<tr
+												key={row.id}
+												onClick={() => navigate(`/players/${row.id}`)}
+												className="pl-row"
+											>
+												<td className="pl-td pl-td-name">{row.full_name}</td>
+												<td className="pl-td pl-td-team">{row.team}</td>
+												<td className="pl-td pl-td-pos">{row.position}</td>
+												<td className="pl-td">{row.hasStats ? row.mpg : '-'}</td>
+												<td className="pl-td">{row.hasStats ? row.ppg : '-'}</td>
+												<td className="pl-td">{row.hasStats ? row.rpg : '-'}</td>
+												<td className="pl-td">{row.hasStats ? row.apg : '-'}</td>
+												<td className="pl-td">{row.hasStats ? row.spg : '-'}</td>
+												<td className="pl-td">{row.hasStats ? row.bpg : '-'}</td>
+												<td className="pl-td">{row.hasStats ? `${row.fgPct}%` : '-'}</td>
+												<td className="pl-td">{row.hasStats ? `${row.fg3Pct}%` : '-'}</td>
+												<td className="pl-td">{row.hasStats ? `${row.ftPct}%` : '-'}</td>
+											</tr>
+										))}
+										{sortedRows.length === 0 && (
+											<tr>
+												<td colSpan={COLUMNS.length} className="pl-empty">
+													No players found matching your search and filters.
+												</td>
+											</tr>
+										)}
+									</tbody>
+								</table>
+							</div>
+							<div className="pl-load-more-wrap">
+								{hasMore && (
+									<button
+										className="pl-load-more-btn"
+										onClick={() => setVisibleCount(v => v + PAGE_SIZE)}
+									>
+										Load more players
+									</button>
+								)}
+								<span className="pl-load-more-count">
+									{sortedRows.length === 0
+										? '0 players'
+										: hasMore
+											? `Showing ${visibleCount} of ${sortedRows.length} players`
+											: `All ${sortedRows.length} players loaded`}
+								</span>
+							</div>
 						</div>
-					</div>
-					<div className="pl-pagination">
-						<span className="pl-pagination-info">
-							{filteredRows.length === 0
-								? '0 players'
-								: `${page * rowsPerPage + 1}–${Math.min((page + 1) * rowsPerPage, filteredRows.length)} of ${filteredRows.length} players`}
-						</span>
-						<div className="pl-pagination-controls">
-							<select
-								value={rowsPerPage}
-								onChange={e => { setRowsPerPage(Number(e.target.value)); setPage(0); }}
-								className="pl-page-size"
-							>
-								<option value={25}>25 / page</option>
-								<option value={50}>50 / page</option>
-								<option value={100}>100 / page</option>
-							</select>
-							<button
-								onClick={() => setPage(p => p - 1)}
-								disabled={page === 0}
-								className="pl-page-btn"
-							>
-								‹
-							</button>
-							<span className="pl-pagination-info">
-								{pageCount === 0 ? '0 / 0' : `${page + 1} / ${pageCount}`}
-							</span>
-							<button
-								onClick={() => setPage(p => p + 1)}
-								disabled={page >= pageCount - 1}
-								className="pl-page-btn"
-							>
-								›
-							</button>
-						</div>
-					</div>
-				</>
-			)}
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }
