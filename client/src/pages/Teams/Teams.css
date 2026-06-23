@@ -1,51 +1,262 @@
+/* ── Page ── */
 .tm-page {
 	max-width: 1400px;
 	margin: 0 auto;
 	padding: 2rem 1.5rem;
 }
 
-.tm-header {
-	margin-bottom: 2rem;
-}
-
-.tm-toolbar {
+/* ── Page header ── */
+.tm-page-header {
 	display: flex;
-	gap: 0.5rem;
-	margin-bottom: 1rem;
+	align-items: baseline;
+	justify-content: space-between;
+	margin-bottom: 1.5rem;
 }
 
-.tm-search-wrap {
-	flex: 1;
+.tm-page-title {
+	font-size: 22px;
+	font-weight: 700;
+	color: rgba(255, 255, 255, 0.92);
+	margin: 0 0 4px;
+}
+
+.tm-page-sub {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.3);
+	margin: 0;
+}
+
+.tm-season-badge {
+	font-size: 10px;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.25);
+	letter-spacing: 0.05em;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	padding: 3px 10px;
+	border-radius: 4px;
+	white-space: nowrap;
+}
+
+/* ── Loading ── */
+.tm-loading {
+	display: flex;
+	justify-content: center;
+	padding: 4rem 0;
+}
+
+.tm-spinner {
+	width: 28px;
+	height: 28px;
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	border-top-color: rgba(255, 255, 255, 0.5);
+	border-radius: 50%;
+	animation: tm-spin 0.7s linear infinite;
+}
+
+@keyframes tm-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* ── Error ── */
+.tm-error {
+	font-size: 13px;
+	color: rgba(220, 80, 80, 0.85);
+}
+
+/* ── Conferences grid ── */
+.tm-conferences {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+}
+
+/* ── Conference card ── */
+.tm-conf-card {
+	position: relative;
+	background: rgba(10, 10, 10, 0.9);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.tm-conf-card::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(160deg, rgba(255, 255, 255, 0.015) 0%, transparent 50%);
+	pointer-events: none;
+	z-index: 0;
+}
+
+/* ── Conference header ── */
+.tm-conf-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.8rem 1rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+	background: rgba(255, 255, 255, 0.025);
+	position: relative;
+	z-index: 1;
+}
+
+.tm-conf-name {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.4);
+}
+
+.tm-conf-cols {
+	display: flex;
+	gap: 0.6rem;
+}
+
+.tm-conf-col-label {
+	font-size: 10px;
+	font-weight: 700;
+	color: rgba(255, 255, 255, 0.2);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	width: 40px;
+	text-align: right;
+}
+
+.tm-conf-col-label--gb {
+	width: 34px;
+}
+
+/* ── Team row ── */
+.tm-team-row {
+	display: flex;
+	align-items: center;
+	padding: 0.5rem 1rem;
+	gap: 0.6rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+	border-left: 2px solid transparent;
+	cursor: pointer;
+	transition: filter 0.12s;
+	position: relative;
+	z-index: 1;
+	text-decoration: none;
+	/* borderLeftColor and background set via inline style per team */
+}
+
+.tm-team-row:hover {
+	filter: brightness(1.15);
+}
+
+.tm-team-row:last-child {
+	border-bottom: none;
+}
+
+/* ── Rank ── */
+.tm-rank {
+	font-size: 11px;
+	font-weight: 700;
+	width: 16px;
+	text-align: center;
+	flex-shrink: 0;
+	color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Logo slot ── */
+.tm-logo-slot {
+	width: 26px;
+	height: 26px;
+	flex-shrink: 0;
 	position: relative;
 	display: flex;
 	align-items: center;
+	justify-content: center;
 }
 
-.tm-search-icon {
-	position: absolute;
-	left: 14px;
-	color: var(--color-fg-muted);
-	pointer-events: none;
-}
-
-.tm-search-input {
+.tm-logo-img {
 	width: 100%;
-	padding: 0.75rem 1rem 0.75rem 2.75rem;
-	background: var(--color-surface-raised);
-	border: 1px solid var(--color-border);
-	border-radius: 8px;
-	color: var(--color-fg);
-	font-size: 0.875rem;
-	font-family: inherit;
-	outline: none;
-	transition: border-color 0.15s;
-	box-sizing: border-box;
+	height: 100%;
+	object-fit: contain;
+	border-radius: 3px;
 }
 
-.tm-search-input::placeholder {
-	color: var(--color-fg-muted);
+.tm-logo-fallback {
+	width: 26px;
+	height: 26px;
+	border-radius: 5px;
+	display: none; /* shown via JS on img error */
+	align-items: center;
+	justify-content: center;
+	font-size: 6px;
+	font-weight: 800;
+	color: rgba(255, 255, 255, 0.4);
+	/* background and border set via inline style per team */
 }
 
-.tm-search-input:focus {
-	border-color: rgba(255, 255, 255, 0.3);
+.tm-logo-fallback--visible {
+	display: flex;
+}
+
+/* ── Team name ── */
+.tm-team-name {
+	flex: 1;
+	font-size: 13px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.85);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* ── Stats ── */
+.tm-stat {
+	font-size: 12px;
+	width: 40px;
+	text-align: right;
+	flex-shrink: 0;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.tm-stat--wl {
+	color: rgba(255, 255, 255, 0.65);
+	font-weight: 500;
+}
+
+.tm-stat--winpct {
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.75);
+}
+
+.tm-stat--gb {
+	width: 34px;
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Section dividers (Play-In / Eliminated) ── */
+.tm-divider {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.4rem 1rem;
+	background: rgba(255, 255, 255, 0.025);
+	border-top: 1px solid rgba(255, 255, 255, 0.07);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+	position: relative;
+	z-index: 1;
+}
+
+.tm-divider-line {
+	flex: 1;
+	height: 1px;
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.tm-divider-label {
+	font-size: 9px;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.35);
+	white-space: nowrap;
 }
